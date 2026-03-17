@@ -53,7 +53,7 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleAdd = (data: { word: string; reading: string; translation: string; level: string }) => {
-    addMut.mutate(data, {
+    addMut.mutate({ ...data, examples: [] }, {
       onSuccess: () => toast.success('新增成功！'),
       onError: (e) => toast.error('新增失敗：' + e.message),
     });
