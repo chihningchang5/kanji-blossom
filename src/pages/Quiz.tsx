@@ -4,14 +4,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { useDailyWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function generateQuiz(dailyWords: VocabularyItem[], allWords: VocabularyItem[]) {
   return dailyWords.map((word) => {
@@ -33,44 +26,49 @@ export default function Quiz() {
   const [selected, setSelected] = useState<string | null>(null);
   const [results, setResults] = useState<{ correct: boolean; word: VocabularyItem }[]>([]);
   const [finished, setFinished] = useState(false);
-  const [learnPrompt, setLearnPrompt] = useState<VocabularyItem | null>(null);
+  const [learnedChecks, setLearnedChecks] = useState<Record<string, boolean>>({});
+  const [submitted, setSubmitted] = useState(false);
 
   const quiz = useMemo(() => {
     if (!dailyWords?.length || !allWords?.length || allWords.length < 4) return [];
     return generateQuiz(dailyWords, allWords);
-  }, [dailyWords, allWords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dailyWords?.map(w => w.id).join(','), allWords?.length]);
 
   const advance = useCallback(() => {
     if (current + 1 >= quiz.length) {
       setFinished(true);
+      // Pre-check correct answers
+      const checks: Record<string, boolean> = {};
+      results.forEach(r => { checks[r.word.id] = r.correct; });
+      // Include current (last) answer
+      const lastCorrect = quiz[current].question.id === selected;
+      checks[quiz[current].question.id] = lastCorrect;
+      setLearnedChecks(checks);
     } else {
       setCurrent((c) => c + 1);
       setSelected(null);
     }
-  }, [current, quiz.length]);
+  }, [current, quiz, results, selected]);
 
   const handleSelect = useCallback((optionId: string) => {
     if (selected) return;
-    const correct = quiz[current].question.id === optionId;
     setSelected(optionId);
+    const correct = quiz[current].question.id === optionId;
     speakJapanese(quiz[current].question.word);
 
     setTimeout(() => {
       setResults((prev) => [...prev, { correct, word: quiz[current].question }]);
-      if (correct) {
-        setLearnPrompt(quiz[current].question);
-      } else {
-        advance();
-      }
+      advance();
     }, 1200);
   }, [selected, quiz, current, advance]);
 
-  const handleLearnResponse = (learned: boolean) => {
-    if (learned && learnPrompt) {
-      toggleLearned.mutate({ id: learnPrompt.id, is_learned: true });
+  const handleSubmitLearned = async () => {
+    const toMark = Object.entries(learnedChecks).filter(([, v]) => v);
+    for (const [id] of toMark) {
+      await toggleLearned.mutateAsync({ id, is_learned: true });
     }
-    setLearnPrompt(null);
-    advance();
+    setSubmitted(true);
   };
 
   const reset = () => {
@@ -78,7 +76,8 @@ export default function Quiz() {
     setSelected(null);
     setResults([]);
     setFinished(false);
-    setLearnPrompt(null);
+    setLearnedChecks({});
+    setSubmitted(false);
   };
 
   if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
@@ -92,22 +91,68 @@ export default function Quiz() {
     );
   }
 
+  // Summary screen
   if (finished) {
-    const correctCount = results.filter((r) => r.correct).length;
+    const allResults = results;
+    const correctCount = allResults.filter((r) => r.correct).length;
+
+    if (submitted) {
+      const markedCount = Object.values(learnedChecks).filter(Boolean).length;
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-6 animate-fade-in">
+          <h2 className="text-3xl font-bold">已更新！</h2>
+          <p className="text-muted-foreground text-lg">已將 {markedCount} 個單字標記為已習得。</p>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={reset}>
+              <RotateCcw className="w-4 h-4 mr-1" />再試一次
+            </Button>
+            <Button asChild><Link to="/">回到首頁</Link></Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4 animate-fade-in">
         <h2 className="text-4xl font-bold">測驗完成！</h2>
         <div className="text-6xl font-serif font-bold text-primary">
-          {correctCount}/{results.length}
+          {correctCount}/{allResults.length}
         </div>
         <p className="text-muted-foreground text-lg">
-          正確率：{Math.round((correctCount / results.length) * 100)}%
+          正確率：{Math.round((correctCount / allResults.length) * 100)}%
         </p>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={reset}>
-            <RotateCcw className="w-4 h-4 mr-1" />再試一次
-          </Button>
-          <Button asChild><Link to="/">回到首頁</Link></Button>
+
+        <div className="w-full max-w-md mt-4">
+          <h3 className="text-lg font-semibold mb-3 text-center">勾選已掌握的單字：</h3>
+          <div className="space-y-3">
+            {allResults.map((r) => (
+              <label
+                key={r.word.id}
+                className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card cursor-pointer hover:bg-accent/30 transition-colors"
+              >
+                <Checkbox
+                  checked={learnedChecks[r.word.id] ?? false}
+                  onCheckedChange={(checked) =>
+                    setLearnedChecks((prev) => ({ ...prev, [r.word.id]: !!checked }))
+                  }
+                />
+                <span className="japanese-word text-xl">{r.word.word}</span>
+                <span className="reading-text text-sm">{r.word.reading}</span>
+                <span className="text-sm text-muted-foreground ml-auto">{r.word.translation}</span>
+                <span className={`text-lg font-bold ${r.correct ? 'text-primary' : 'text-destructive'}`}>
+                  {r.correct ? '○' : '×'}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-3 mt-6 justify-center">
+            <Button variant="outline" onClick={reset}>
+              <RotateCcw className="w-4 h-4 mr-1" />重新測驗
+            </Button>
+            <Button onClick={handleSubmitLearned} disabled={toggleLearned.isPending}>
+              確認送出 ✓
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -159,25 +204,6 @@ export default function Quiz() {
           })}
         </div>
       </main>
-
-      <Dialog open={!!learnPrompt} onOpenChange={() => handleLearnResponse(false)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>已掌握此單字？</DialogTitle>
-            <DialogDescription>
-              「{learnPrompt?.word}」回答正確！是否將此單字標記為已習得？
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => handleLearnResponse(false)}>
-              還沒
-            </Button>
-            <Button onClick={() => handleLearnResponse(true)}>
-              已掌握 ✓
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

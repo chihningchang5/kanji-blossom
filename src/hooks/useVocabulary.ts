@@ -32,10 +32,33 @@ export function useVocabulary() {
   });
 }
 
+const DAILY_WORDS_KEY = 'daily-words-ids';
+const DAILY_WORDS_DATE_KEY = 'daily-words-date';
+
 export function useDailyWords() {
   return useQuery({
     queryKey: ['daily-words', new Date().toDateString()],
     queryFn: async () => {
+      const today = new Date().toDateString();
+      const storedDate = localStorage.getItem(DAILY_WORDS_DATE_KEY);
+      const storedIds = localStorage.getItem(DAILY_WORDS_KEY);
+
+      // If we have stored IDs for today, fetch those specific words
+      if (storedDate === today && storedIds) {
+        const ids: string[] = JSON.parse(storedIds);
+        const { data, error } = await supabase
+          .from('vocabulary')
+          .select('*')
+          .in('id', ids);
+        if (error) throw error;
+        const items = data as unknown as VocabularyItem[];
+        // Filter out any that became learned since storage
+        const stillValid = items.filter(w => !w.is_learned);
+        if (stillValid.length > 0) return stillValid;
+        // If all stored words are now learned, fall through to pick new ones
+      }
+
+      // Pick new random words
       const { data, error } = await supabase
         .from('vocabulary')
         .select('*')
@@ -43,8 +66,16 @@ export function useDailyWords() {
       if (error) throw error;
       const items = data as unknown as VocabularyItem[];
       const shuffled = items.sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, 5);
+      const picked = shuffled.slice(0, 5);
+
+      // Store in localStorage
+      localStorage.setItem(DAILY_WORDS_DATE_KEY, today);
+      localStorage.setItem(DAILY_WORDS_KEY, JSON.stringify(picked.map(w => w.id)));
+
+      return picked;
     },
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 }
 
