@@ -5,17 +5,20 @@ import type { VocabularyItem } from '@/hooks/useVocabulary';
 interface Props {
   item: VocabularyItem;
   index: number;
+  onClick?: () => void;
 }
 
-export default function VocabularyCard({ item, index }: Props) {
+export default function VocabularyCard({ item, index, onClick }: Props) {
   return (
     <div
       className="bg-card border border-border rounded-lg p-8 text-center space-y-3 animate-fade-in cursor-pointer group"
       style={{ animationDelay: `${index * 100}ms` }}
-      onClick={() => speakJapanese(item.word)}
+      onClick={onClick}
     >
       <div className="flex items-center justify-center gap-2">
-        <span className="japanese-word">{item.word}</span>
+        <span className="japanese-word" onClick={(e) => { e.stopPropagation(); speakJapanese(item.word); }}>
+          {item.word}
+        </span>
         <Volume2 className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
       <p className="reading-text">{item.reading}</p>

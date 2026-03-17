@@ -119,9 +119,9 @@ export default function Admin() {
             <Upload className="w-5 h-5 text-primary" />AI 批次匯入
           </h2>
           <p className="text-sm text-muted-foreground mb-3">
-            貼上 JSON 格式的單字列表，例如：
-            <code className="block mt-1 p-2 bg-secondary rounded text-xs">
-              {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5"}]'}
+            貼上 JSON 格式的單字列表，可包含 examples 欄位：
+            <code className="block mt-1 p-2 bg-secondary rounded text-xs whitespace-pre-wrap">
+              {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5","examples":[{"sentence":"猫が好きです","reading":"ねこがすきです","translation":"我喜歡貓"}]}]'}
             </code>
           </p>
           <Textarea
