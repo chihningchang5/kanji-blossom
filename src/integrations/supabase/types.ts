@@ -17,7 +17,9 @@ export type Database = {
       vocabulary: {
         Row: {
           created_at: string
+          examples: Json | null
           id: string
+          is_learned: boolean
           level: string
           reading: string
           translation: string
@@ -25,7 +27,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          examples?: Json | null
           id?: string
+          is_learned?: boolean
           level: string
           reading: string
           translation: string
@@ -33,7 +37,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          examples?: Json | null
           id?: string
+          is_learned?: boolean
           level?: string
           reading?: string
           translation?: string
