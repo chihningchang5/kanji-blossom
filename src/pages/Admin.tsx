@@ -78,11 +78,12 @@ export default function Admin() {
           throw new Error(`無效的 level: ${item.level}`);
         }
       }
-      const cleaned = items.map(({ word, reading, translation, level }: any) => ({
+      const cleaned = items.map(({ word, reading, translation, level, examples }: any) => ({
         word: String(word).trim(),
         reading: String(reading).trim(),
         translation: String(translation).trim(),
         level: String(level).trim(),
+        examples: Array.isArray(examples) ? examples : [],
       }));
       bulkMut.mutate(cleaned, {
         onSuccess: () => { toast.success(`成功匯入 ${cleaned.length} 個單字！`); setJsonText(''); },
