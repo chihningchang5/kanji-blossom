@@ -1,9 +1,17 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
-import { useDailyWords, useVocabulary, type VocabularyItem } from '@/hooks/useVocabulary';
+import { useDailyWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 function generateQuiz(dailyWords: VocabularyItem[], allWords: VocabularyItem[]) {
   return dailyWords.map((word) => {
@@ -19,38 +27,58 @@ function generateQuiz(dailyWords: VocabularyItem[], allWords: VocabularyItem[]) 
 export default function Quiz() {
   const { data: dailyWords, isLoading: l1 } = useDailyWords();
   const { data: allWords, isLoading: l2 } = useVocabulary();
+  const toggleLearned = useToggleLearned();
+
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [results, setResults] = useState<boolean[]>([]);
+  const [results, setResults] = useState<{ correct: boolean; word: VocabularyItem }[]>([]);
   const [finished, setFinished] = useState(false);
+  const [learnPrompt, setLearnPrompt] = useState<VocabularyItem | null>(null);
 
   const quiz = useMemo(() => {
     if (!dailyWords?.length || !allWords?.length || allWords.length < 4) return [];
     return generateQuiz(dailyWords, allWords);
   }, [dailyWords, allWords]);
 
+  const advance = useCallback(() => {
+    if (current + 1 >= quiz.length) {
+      setFinished(true);
+    } else {
+      setCurrent((c) => c + 1);
+      setSelected(null);
+    }
+  }, [current, quiz.length]);
+
   const handleSelect = useCallback((optionId: string) => {
     if (selected) return;
     const correct = quiz[current].question.id === optionId;
     setSelected(optionId);
     speakJapanese(quiz[current].question.word);
-    
+
     setTimeout(() => {
-      setResults((prev) => [...prev, correct]);
-      if (current + 1 >= quiz.length) {
-        setFinished(true);
+      setResults((prev) => [...prev, { correct, word: quiz[current].question }]);
+      if (correct) {
+        setLearnPrompt(quiz[current].question);
       } else {
-        setCurrent((c) => c + 1);
-        setSelected(null);
+        advance();
       }
     }, 1200);
-  }, [selected, quiz, current]);
+  }, [selected, quiz, current, advance]);
+
+  const handleLearnResponse = (learned: boolean) => {
+    if (learned && learnPrompt) {
+      toggleLearned.mutate({ id: learnPrompt.id, is_learned: true });
+    }
+    setLearnPrompt(null);
+    advance();
+  };
 
   const reset = () => {
     setCurrent(0);
     setSelected(null);
     setResults([]);
     setFinished(false);
+    setLearnPrompt(null);
   };
 
   if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
@@ -65,15 +93,15 @@ export default function Quiz() {
   }
 
   if (finished) {
-    const correct = results.filter(Boolean).length;
+    const correctCount = results.filter((r) => r.correct).length;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6">
         <h2 className="text-4xl font-bold">測驗完成！</h2>
         <div className="text-6xl font-serif font-bold text-primary">
-          {correct}/{results.length}
+          {correctCount}/{results.length}
         </div>
         <p className="text-muted-foreground text-lg">
-          正確率：{Math.round((correct / results.length) * 100)}%
+          正確率：{Math.round((correctCount / results.length) * 100)}%
         </p>
         <div className="flex gap-3">
           <Button variant="outline" onClick={reset}>
@@ -100,7 +128,6 @@ export default function Quiz() {
       </header>
 
       <main className="container max-w-xl mx-auto px-4 py-16">
-        {/* Feedback overlay */}
         {selected && (
           <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
             <span className={`text-9xl font-bold animate-scale-in ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
@@ -111,10 +138,7 @@ export default function Quiz() {
 
         <div className="text-center mb-12">
           <p className="text-sm text-muted-foreground mb-4">以下漢字的中文意思是？</p>
-          <p
-            className="japanese-word text-5xl cursor-pointer"
-            onClick={() => speakJapanese(q.question.word)}
-          >
+          <p className="japanese-word text-5xl cursor-pointer" onClick={() => speakJapanese(q.question.word)}>
             {q.question.word}
           </p>
           <p className="reading-text mt-2">{q.question.reading}</p>
@@ -135,6 +159,25 @@ export default function Quiz() {
           })}
         </div>
       </main>
+
+      <Dialog open={!!learnPrompt} onOpenChange={() => handleLearnResponse(false)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>已掌握此單字？</DialogTitle>
+            <DialogDescription>
+              「{learnPrompt?.word}」回答正確！是否將此單字標記為已習得？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => handleLearnResponse(false)}>
+              還沒
+            </Button>
+            <Button onClick={() => handleLearnResponse(true)}>
+              已掌握 ✓
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

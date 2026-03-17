@@ -53,7 +53,7 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleAdd = (data: { word: string; reading: string; translation: string; level: string }) => {
-    addMut.mutate(data, {
+    addMut.mutate({ ...data, examples: [] }, {
       onSuccess: () => toast.success('新增成功！'),
       onError: (e) => toast.error('新增失敗：' + e.message),
     });
@@ -78,11 +78,12 @@ export default function Admin() {
           throw new Error(`無效的 level: ${item.level}`);
         }
       }
-      const cleaned = items.map(({ word, reading, translation, level }: any) => ({
+      const cleaned = items.map(({ word, reading, translation, level, examples }: any) => ({
         word: String(word).trim(),
         reading: String(reading).trim(),
         translation: String(translation).trim(),
         level: String(level).trim(),
+        examples: Array.isArray(examples) ? examples : [],
       }));
       bulkMut.mutate(cleaned, {
         onSuccess: () => { toast.success(`成功匯入 ${cleaned.length} 個單字！`); setJsonText(''); },
@@ -119,9 +120,9 @@ export default function Admin() {
             <Upload className="w-5 h-5 text-primary" />AI 批次匯入
           </h2>
           <p className="text-sm text-muted-foreground mb-3">
-            貼上 JSON 格式的單字列表，例如：
-            <code className="block mt-1 p-2 bg-secondary rounded text-xs">
-              {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5"}]'}
+            貼上 JSON 格式的單字列表，可包含 examples 欄位：
+            <code className="block mt-1 p-2 bg-secondary rounded text-xs whitespace-pre-wrap">
+              {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5","examples":[{"sentence":"猫が好きです","reading":"ねこがすきです","translation":"我喜歡貓"}]}]'}
             </code>
           </p>
           <Textarea
