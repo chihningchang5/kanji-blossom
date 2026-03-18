@@ -14,6 +14,8 @@ export interface VocabularyItem {
   translation: string;
   level: string;
   is_learned: boolean;
+  is_public: boolean;
+  user_id: string | null;
   examples: ExampleSentence[];
   created_at: string;
 }
@@ -43,7 +45,6 @@ export function useDailyWords() {
       const storedDate = localStorage.getItem(DAILY_WORDS_DATE_KEY);
       const storedIds = localStorage.getItem(DAILY_WORDS_KEY);
 
-      // If we have stored IDs for today, fetch those specific words
       if (storedDate === today && storedIds) {
         const ids: string[] = JSON.parse(storedIds);
         const { data, error } = await supabase
@@ -52,13 +53,10 @@ export function useDailyWords() {
           .in('id', ids);
         if (error) throw error;
         const items = data as unknown as VocabularyItem[];
-        // Filter out any that became learned since storage
         const stillValid = items.filter(w => !w.is_learned);
         if (stillValid.length > 0) return stillValid;
-        // If all stored words are now learned, fall through to pick new ones
       }
 
-      // Pick new random words
       const { data, error } = await supabase
         .from('vocabulary')
         .select('*')
@@ -68,7 +66,6 @@ export function useDailyWords() {
       const shuffled = items.sort(() => Math.random() - 0.5);
       const picked = shuffled.slice(0, 5);
 
-      // Store in localStorage
       localStorage.setItem(DAILY_WORDS_DATE_KEY, today);
       localStorage.setItem(DAILY_WORDS_KEY, JSON.stringify(picked.map(w => w.id)));
 
@@ -97,7 +94,7 @@ export function useLearnedWords() {
 export function useAddVocabulary() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (item: Omit<VocabularyItem, 'id' | 'created_at' | 'is_learned'>) => {
+    mutationFn: async (item: { word: string; reading: string; translation: string; level: string; examples: ExampleSentence[]; is_public?: boolean; user_id?: string }) => {
       const { error } = await supabase.from('vocabulary').insert(item as any);
       if (error) throw error;
     },
@@ -135,10 +132,21 @@ export function useToggleLearned() {
   });
 }
 
+export function useDeleteVocabulary() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('vocabulary').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vocabulary'] }),
+  });
+}
+
 export function useBulkImport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (items: Omit<VocabularyItem, 'id' | 'created_at' | 'is_learned'>[]) => {
+    mutationFn: async (items: { word: string; reading: string; translation: string; level: string; examples: ExampleSentence[]; is_public?: boolean }[]) => {
       const { error } = await supabase.from('vocabulary').insert(items as any);
       if (error) throw error;
     },
