@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, BookCheck, Swords } from 'lucide-react';
 import { useLearnedWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
+import AppHeader from '@/components/AppHeader';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
 import WordDetailModal from '@/components/WordDetailModal';
