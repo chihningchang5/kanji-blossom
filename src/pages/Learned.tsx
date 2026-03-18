@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, BookCheck, Swords } from 'lucide-react';
 import { useLearnedWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
+import AppHeader from '@/components/AppHeader';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
 import WordDetailModal from '@/components/WordDetailModal';
@@ -224,18 +225,14 @@ export default function Learned() {
   // Learned words list view
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border">
-        <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/"><ArrowLeft className="w-4 h-4 mr-1" />返回首頁</Link>
-          </Button>
+      <AppHeader />
+      <div className="container max-w-4xl mx-auto px-4 py-4 flex justify-end">
           {learnedWords && learnedWords.length >= 4 && (
             <Button size="sm" onClick={() => setShowQuiz(true)}>
               <Swords className="w-4 h-4 mr-1" />複習測驗
             </Button>
           )}
-        </div>
-      </header>
+      </div>
 
       <main className="container max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-12">

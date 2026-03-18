@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, PenTool, Settings, BookCheck } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { useDailyWords, type VocabularyItem } from '@/hooks/useVocabulary';
 import VocabularyCard from '@/components/VocabularyCard';
 import WordDetailModal from '@/components/WordDetailModal';
+import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -12,24 +13,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border">
-        <div className="container max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">
-            <span className="text-primary">日</span>本語の単語
-          </h1>
-          <nav className="flex gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/quiz"><PenTool className="w-4 h-4 mr-1" />測驗</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/learned"><BookCheck className="w-4 h-4 mr-1" />已習得</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin"><Settings className="w-4 h-4 mr-1" />管理</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="container max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-12">

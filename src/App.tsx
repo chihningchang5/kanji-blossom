@@ -3,10 +3,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth";
+import { RequireAuth, RequireAdmin } from "@/components/RequireAuth";
 import Index from "./pages/Index.tsx";
 import Quiz from "./pages/Quiz.tsx";
 import Learned from "./pages/Learned.tsx";
 import Admin from "./pages/Admin.tsx";
+import Login from "./pages/Login.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -17,13 +20,16 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/learned" element={<Learned />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
+            <Route path="/quiz" element={<RequireAuth><Quiz /></RequireAuth>} />
+            <Route path="/learned" element={<RequireAuth><Learned /></RequireAuth>} />
+            <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Upload } from 'lucide-react';
-import { useVocabulary, useAddVocabulary, useUpdateVocabulary, useBulkImport, type VocabularyItem } from '@/hooks/useVocabulary';
+import { ArrowLeft, Plus, Upload, Trash2 } from 'lucide-react';
+import { useVocabulary, useAddVocabulary, useUpdateVocabulary, useDeleteVocabulary, useBulkImport, type VocabularyItem } from '@/hooks/useVocabulary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import AppHeader from '@/components/AppHeader';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const LEVELS = ['N1', 'N2', 'N3', 'N4', 'N5'];
 
@@ -48,12 +60,16 @@ export default function Admin() {
   const { data: words, isLoading } = useVocabulary();
   const addMut = useAddVocabulary();
   const updateMut = useUpdateVocabulary();
+  const deleteMut = useDeleteVocabulary();
   const bulkMut = useBulkImport();
   const [jsonText, setJsonText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Filter to only show public words in admin (public library management)
+  const publicWords = words?.filter(w => w.is_public) || [];
+
   const handleAdd = (data: { word: string; reading: string; translation: string; level: string }) => {
-    addMut.mutate({ ...data, examples: [] }, {
+    addMut.mutate({ ...data, examples: [], is_public: true }, {
       onSuccess: () => toast.success('新增成功！'),
       onError: (e) => toast.error('新增失敗：' + e.message),
     });
@@ -63,6 +79,13 @@ export default function Admin() {
     updateMut.mutate({ id, ...data }, {
       onSuccess: () => { toast.success('更新成功！'); setEditingId(null); },
       onError: (e) => toast.error('更新失敗：' + e.message),
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    deleteMut.mutate(id, {
+      onSuccess: () => toast.success('刪除成功！'),
+      onError: (e) => toast.error('刪除失敗：' + e.message),
     });
   };
 
@@ -84,6 +107,7 @@ export default function Admin() {
         translation: String(translation).trim(),
         level: String(level).trim(),
         examples: Array.isArray(examples) ? examples : [],
+        is_public: true,
       }));
       bulkMut.mutate(cleaned, {
         onSuccess: () => { toast.success(`成功匯入 ${cleaned.length} 個單字！`); setJsonText(''); },
@@ -96,31 +120,22 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border">
-        <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/"><ArrowLeft className="w-4 h-4 mr-1" />返回首頁</Link>
-          </Button>
-          <h1 className="text-xl font-bold">單字管理</h1>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="container max-w-4xl mx-auto px-4 py-8 space-y-10">
-        {/* Add new word */}
         <section>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Plus className="w-5 h-5 text-primary" />手動新增單字
+            <Plus className="w-5 h-5 text-primary" />手動新增公共庫單字
           </h2>
           <EditForm onSubmit={handleAdd} submitLabel="新增" />
         </section>
 
-        {/* Bulk import */}
         <section>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Upload className="w-5 h-5 text-primary" />AI 批次匯入
+            <Upload className="w-5 h-5 text-primary" />批次匯入公共庫
           </h2>
           <p className="text-sm text-muted-foreground mb-3">
-            貼上 JSON 格式的單字列表，可包含 examples 欄位：
+            貼上 JSON 格式的單字列表：
             <code className="block mt-1 p-2 bg-secondary rounded text-xs whitespace-pre-wrap">
               {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5","examples":[{"sentence":"猫が好きです","reading":"ねこがすきです","translation":"我喜歡貓"}]}]'}
             </code>
@@ -136,13 +151,12 @@ export default function Admin() {
           </Button>
         </section>
 
-        {/* Word list */}
         <section>
-          <h2 className="text-lg font-semibold mb-4">現有單字 ({words?.length || 0})</h2>
+          <h2 className="text-lg font-semibold mb-4">公共庫單字 ({publicWords.length})</h2>
           {isLoading ? (
             <p className="text-muted-foreground">載入中...</p>
-          ) : !words?.length ? (
-            <p className="text-muted-foreground">尚無單字。</p>
+          ) : !publicWords.length ? (
+            <p className="text-muted-foreground">尚無公共庫單字。</p>
           ) : (
             <div className="border border-border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
@@ -156,7 +170,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {words.map((w) => (
+                  {publicWords.map((w) => (
                     <tr key={w.id} className="border-t border-border">
                       {editingId === w.id ? (
                         <td colSpan={5} className="px-4 py-3">
@@ -169,8 +183,27 @@ export default function Admin() {
                           <td className="px-4 py-2">{w.reading}</td>
                           <td className="px-4 py-2">{w.translation}</td>
                           <td className="px-4 py-2"><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{w.level}</span></td>
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => setEditingId(w.id)}>編輯</Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    確定要刪除「{w.word}」嗎？此操作無法復原。
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>取消</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(w.id)}>刪除</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </td>
                         </>
                       )}
