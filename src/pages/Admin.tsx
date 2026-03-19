@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Upload, Trash2 } from 'lucide-react';
-import { useVocabulary, useAddVocabulary, useUpdateVocabulary, useDeleteVocabulary, useBulkImport, type VocabularyItem } from '@/hooks/useVocabulary';
+import { Plus, Upload, Trash2, Pencil } from 'lucide-react';
+import { useVocabulary, useAddVocabulary, useUpdateVocabulary, useDeleteVocabulary, useBulkImport, type VocabularyItem, type ExampleSentence } from '@/hooks/useVocabulary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import AppHeader from '@/components/AppHeader';
 import { toast } from 'sonner';
+import ExampleEditor from '@/components/admin/ExampleEditor';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,11 +65,20 @@ export default function Admin() {
   const bulkMut = useBulkImport();
   const [jsonText, setJsonText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingExamplesId, setEditingExamplesId] = useState<string | null>(null);
 
-  // Filter to only show public words in admin (public library management)
   const publicWords = words?.filter(w => w.is_public) || [];
 
   const handleAdd = (data: { word: string; reading: string; translation: string; level: string }) => {
+    // Check for duplicate (same word + reading)
+    const existing = publicWords.find(w => w.word === data.word && w.reading === data.reading);
+    if (existing) {
+      updateMut.mutate({ id: existing.id, ...data }, {
+        onSuccess: () => toast.success('已合併更新同名單字！'),
+        onError: (e) => toast.error('更新失敗：' + e.message),
+      });
+      return;
+    }
     addMut.mutate({ ...data, examples: [], is_public: true }, {
       onSuccess: () => toast.success('新增成功！'),
       onError: (e) => toast.error('新增失敗：' + e.message),
@@ -89,6 +99,13 @@ export default function Admin() {
     });
   };
 
+  const handleSaveExamples = (id: string, examples: ExampleSentence[]) => {
+    updateMut.mutate({ id, examples } as any, {
+      onSuccess: () => { toast.success('例句已更新！'); setEditingExamplesId(null); },
+      onError: (e) => toast.error('更新失敗：' + e.message),
+    });
+  };
+
   const handleBulkImport = () => {
     try {
       const items = JSON.parse(jsonText);
@@ -101,18 +118,55 @@ export default function Admin() {
           throw new Error(`無效的 level: ${item.level}`);
         }
       }
-      const cleaned = items.map(({ word, reading, translation, level, examples }: any) => ({
-        word: String(word).trim(),
-        reading: String(reading).trim(),
-        translation: String(translation).trim(),
-        level: String(level).trim(),
-        examples: Array.isArray(examples) ? examples : [],
-        is_public: true,
-      }));
-      bulkMut.mutate(cleaned, {
-        onSuccess: () => { toast.success(`成功匯入 ${cleaned.length} 個單字！`); setJsonText(''); },
-        onError: (e) => toast.error('匯入失敗：' + e.message),
-      });
+
+      // Deduplicate: merge items with same word+reading, keep last
+      const uniqueMap = new Map<string, any>();
+      for (const item of items) {
+        const key = `${item.word}|${item.reading}`;
+        uniqueMap.set(key, item);
+      }
+
+      // Check against existing words
+      const toInsert: any[] = [];
+      const toUpdate: { id: string; data: any }[] = [];
+
+      for (const item of uniqueMap.values()) {
+        const existing = publicWords.find(w => w.word === item.word && w.reading === item.reading);
+        const cleaned = {
+          word: String(item.word).trim(),
+          reading: String(item.reading).trim(),
+          translation: String(item.translation).trim(),
+          level: String(item.level).trim(),
+          examples: Array.isArray(item.examples) ? item.examples : [],
+          is_public: true,
+        };
+        if (existing) {
+          toUpdate.push({ id: existing.id, data: cleaned });
+        } else {
+          toInsert.push(cleaned);
+        }
+      }
+
+      // Process updates
+      const updatePromises = toUpdate.map(({ id, data }) =>
+        updateMut.mutateAsync({ id, ...data } as any)
+      );
+
+      Promise.all(updatePromises).then(() => {
+        if (toInsert.length > 0) {
+          bulkMut.mutate(toInsert, {
+            onSuccess: () => {
+              toast.success(`新增 ${toInsert.length} 個、更新 ${toUpdate.length} 個單字！`);
+              setJsonText('');
+            },
+            onError: (e) => toast.error('匯入失敗：' + e.message),
+          });
+        } else {
+          toast.success(`更新 ${toUpdate.length} 個已存在的單字！`);
+          setJsonText('');
+        }
+      }).catch((e) => toast.error('更新失敗：' + e.message));
+
     } catch (e: any) {
       toast.error('JSON 格式錯誤：' + e.message);
     }
@@ -127,6 +181,7 @@ export default function Admin() {
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />手動新增公共庫單字
           </h2>
+          <p className="text-xs text-muted-foreground mb-2">若漢字與讀音相同，將自動合併更新。</p>
           <EditForm onSubmit={handleAdd} submitLabel="新增" />
         </section>
 
@@ -135,7 +190,7 @@ export default function Admin() {
             <Upload className="w-5 h-5 text-primary" />批次匯入公共庫
           </h2>
           <p className="text-sm text-muted-foreground mb-3">
-            貼上 JSON 格式的單字列表：
+            貼上 JSON 格式的單字列表（重複漢字+讀音將自動合併）：
             <code className="block mt-1 p-2 bg-secondary rounded text-xs whitespace-pre-wrap">
               {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5","examples":[{"sentence":"猫が好きです","reading":"ねこがすきです","translation":"我喜歡貓"}]}]'}
             </code>
@@ -177,6 +232,14 @@ export default function Admin() {
                           <EditForm initial={w} onSubmit={handleUpdate(w.id)} submitLabel="更新" />
                           <Button variant="ghost" size="sm" className="mt-1" onClick={() => setEditingId(null)}>取消</Button>
                         </td>
+                      ) : editingExamplesId === w.id ? (
+                        <td colSpan={5} className="px-4 py-3">
+                          <ExampleEditor
+                            examples={w.examples || []}
+                            onSave={(examples) => handleSaveExamples(w.id, examples)}
+                            onCancel={() => setEditingExamplesId(null)}
+                          />
+                        </td>
                       ) : (
                         <>
                           <td className="px-4 py-2 font-serif font-semibold">{w.word}</td>
@@ -185,6 +248,9 @@ export default function Admin() {
                           <td className="px-4 py-2"><span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{w.level}</span></td>
                           <td className="px-4 py-2 flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => setEditingId(w.id)}>編輯</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setEditingExamplesId(w.id)}>
+                              <Pencil className="w-4 h-4 mr-1" />例句
+                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
