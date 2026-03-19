@@ -25,20 +25,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // IMPORTANT: Set up listener BEFORE getSession to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
+        console.log('Auth Status:', session ? `Logged in as ${session.user.email}` : 'Not logged in');
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Check admin role
-          const { data } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .eq('role', 'admin')
-            .maybeSingle();
-          setIsAdmin(!!data);
+          // Use setTimeout to avoid deadlock - never await inside onAuthStateChange
+          setTimeout(() => {
+            supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .eq('role', 'admin')
+              .maybeSingle()
+              .then(({ data }) => {
+                console.log('Admin check result:', data);
+                setIsAdmin(!!data);
+              });
+          }, 0);
         } else {
           setIsAdmin(false);
         }
@@ -46,7 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session ? `Logged in as ${session.user?.email}` : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
