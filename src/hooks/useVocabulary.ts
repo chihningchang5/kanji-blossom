@@ -95,7 +95,7 @@ export function useAddVocabulary() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (item: { word: string; reading: string; translation: string; level: string; examples: ExampleSentence[]; is_public?: boolean; user_id?: string }) => {
-      const { error } = await supabase.from('vocabulary').insert(item as any);
+      const { error } = await supabase.from('vocabulary').upsert(item as any, { onConflict: 'word,reading' });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['vocabulary'] }),
@@ -147,7 +147,7 @@ export function useBulkImport() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (items: { word: string; reading: string; translation: string; level: string; examples: ExampleSentence[]; is_public?: boolean }[]) => {
-      const { error } = await supabase.from('vocabulary').insert(items as any);
+      const { error } = await supabase.from('vocabulary').upsert(items as any, { onConflict: 'word,reading' });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['vocabulary'] }),
