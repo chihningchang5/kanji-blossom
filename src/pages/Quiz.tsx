@@ -5,6 +5,7 @@ import { useDailyWords, useVocabulary, useToggleLearned, type VocabularyItem } f
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
 import QuizQuestion from '@/components/quiz/QuizQuestion';
+import ReadingToKanjiQuestion from '@/components/quiz/ReadingToKanjiQuestion';
 import QuizSummary from '@/components/quiz/QuizSummary';
 import ClozeQuestion from '@/components/quiz/ClozeQuestion';
 
