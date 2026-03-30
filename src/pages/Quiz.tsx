@@ -61,7 +61,8 @@ export default function Quiz() {
   const [results, setResults] = useState<QuizResult[]>([]);
   const [finished, setFinished] = useState(false);
   const [attemptCount, setAttemptCount] = useState(getAttemptCount);
-  const isClozeMode = attemptCount >= 2; // 0-indexed: 3rd attempt = index 2
+  // Quiz mode: 0 = kanji→translation, 1 = reading→kanji, 2+ = cloze
+  const quizMode = attemptCount === 0 ? 'basic' : attemptCount === 1 ? 'reading' : 'cloze';
 
   const quiz = useMemo(() => {
     if (!dailyWords?.length || !allWords?.length || allWords.length < 4) return [];
