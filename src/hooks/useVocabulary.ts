@@ -27,6 +27,7 @@ export function useVocabulary() {
       const { data, error } = await supabase
         .from('vocabulary')
         .select('*')
+        .order('level', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as VocabularyItem[];
@@ -84,6 +85,7 @@ export function useLearnedWords() {
         .from('vocabulary')
         .select('*')
         .eq('is_learned', true)
+        .order('level', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as VocabularyItem[];
