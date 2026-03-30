@@ -111,9 +111,8 @@ export default function Quiz() {
   }
 
   const q = quiz[current];
-  // Check if this word has examples for cloze mode
   const hasExamples = q.question.examples && q.question.examples.length > 0;
-  const useCloze = isClozeMode && hasExamples;
+  const useMode = quizMode === 'cloze' && hasExamples ? 'cloze' : quizMode === 'reading' ? 'reading' : 'basic';
 
   return (
     <div className="min-h-screen">
@@ -123,9 +122,14 @@ export default function Quiz() {
             <Link to="/"><ArrowLeft className="w-4 h-4 mr-1" />返回</Link>
           </Button>
           <div className="flex items-center gap-3">
-            {isClozeMode && (
+            {useMode === 'cloze' && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                 填空模式
+              </span>
+            )}
+            {useMode === 'reading' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                讀音→漢字
               </span>
             )}
             <span className="text-sm text-muted-foreground">{current + 1} / {quiz.length}</span>
@@ -134,18 +138,12 @@ export default function Quiz() {
       </header>
 
       <main className="container max-w-xl mx-auto px-4 py-16">
-        {useCloze ? (
-          <ClozeQuestion
-            question={q.question}
-            options={q.options}
-            onAnswer={handleAnswer}
-          />
+        {useMode === 'cloze' ? (
+          <ClozeQuestion question={q.question} options={q.options} onAnswer={handleAnswer} />
+        ) : useMode === 'reading' ? (
+          <ReadingToKanjiQuestion question={q.question} options={q.options} onAnswer={handleAnswer} />
         ) : (
-          <QuizQuestion
-            question={q.question}
-            options={q.options}
-            onAnswer={handleAnswer}
-          />
+          <QuizQuestion question={q.question} options={q.options} onAnswer={handleAnswer} />
         )}
       </main>
     </div>
