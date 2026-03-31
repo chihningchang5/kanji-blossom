@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, CalendarDays } from 'lucide-react';
 import { useDailyWords, type VocabularyItem } from '@/hooks/useVocabulary';
 import VocabularyCard from '@/components/VocabularyCard';
 import WordDetailModal from '@/components/WordDetailModal';
