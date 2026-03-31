@@ -10,6 +10,7 @@ import Quiz from "./pages/Quiz.tsx";
 import Learned from "./pages/Learned.tsx";
 import Admin from "./pages/Admin.tsx";
 import Login from "./pages/Login.tsx";
+import CalendarPage from "./pages/Calendar.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
