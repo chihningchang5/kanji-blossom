@@ -18,6 +18,7 @@ export interface VocabularyItem {
   user_id: string | null;
   examples: ExampleSentence[];
   created_at: string;
+  learned_at: string | null;
 }
 
 export function useVocabulary() {

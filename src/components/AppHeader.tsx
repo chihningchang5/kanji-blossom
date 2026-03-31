@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { PenTool, BookCheck, Settings, LogOut } from 'lucide-react';
+import { PenTool, BookCheck, Settings, LogOut, CalendarDays } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
@@ -18,6 +18,9 @@ export default function AppHeader() {
           </Button>
           <Button variant="ghost" size="sm" asChild>
             <Link to="/learned"><BookCheck className="w-4 h-4 mr-1" />已習得</Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/calendar"><CalendarDays className="w-4 h-4 mr-1" />集點</Link>
           </Button>
           {isAdmin && (
             <Button variant="ghost" size="sm" asChild>

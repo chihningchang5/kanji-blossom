@@ -10,6 +10,7 @@ import Quiz from "./pages/Quiz.tsx";
 import Learned from "./pages/Learned.tsx";
 import Admin from "./pages/Admin.tsx";
 import Login from "./pages/Login.tsx";
+import CalendarPage from "./pages/Calendar.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
             <Route path="/quiz" element={<RequireAuth><Quiz /></RequireAuth>} />
             <Route path="/learned" element={<RequireAuth><Learned /></RequireAuth>} />
+            <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
             <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
