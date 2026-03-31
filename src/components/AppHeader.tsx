@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { PenTool, BookCheck, Settings, LogOut } from 'lucide-react';
+import { PenTool, BookCheck, Settings, LogOut, CalendarDays } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
