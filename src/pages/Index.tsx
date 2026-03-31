@@ -23,6 +23,9 @@ const Index = () => {
           </div>
           <h2 className="text-3xl font-bold mb-2">今日の五つの言葉</h2>
           <p className="text-muted-foreground">點擊單字即可查看詳情與例句</p>
+          <Link to="/calendar" className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary hover:underline font-medium">
+            <CalendarDays className="w-4 h-4" />學習集點卡
+          </Link>
         </div>
 
         {isLoading ? (

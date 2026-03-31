@@ -19,6 +19,9 @@ export default function AppHeader() {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/learned"><BookCheck className="w-4 h-4 mr-1" />已習得</Link>
           </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/calendar"><CalendarDays className="w-4 h-4 mr-1" />集點</Link>
+          </Button>
           {isAdmin && (
             <Button variant="ghost" size="sm" asChild>
               <Link to="/admin"><Settings className="w-4 h-4 mr-1" />管理</Link>

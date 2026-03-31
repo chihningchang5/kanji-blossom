@@ -266,9 +266,16 @@ export default function Learned() {
                 <p className="font-serif text-2xl font-semibold">{w.word}</p>
                 <p className="text-sm text-muted-foreground">{w.reading}</p>
                 <p className="text-sm text-foreground">{w.translation}</p>
-                <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                  {w.level}
-                </span>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {w.level}
+                  </span>
+                </div>
+                {w.learned_at && (
+                  <p className="text-[10px] text-muted-foreground">
+                    習得：{new Date(w.learned_at).toLocaleDateString('zh-TW')}
+                  </p>
+                )}
               </div>
             ))}
           </div>
