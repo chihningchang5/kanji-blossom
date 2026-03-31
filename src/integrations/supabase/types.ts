@@ -57,6 +57,7 @@ export type Database = {
           id: string
           is_learned: boolean
           is_public: boolean
+          learned_at: string | null
           level: string
           reading: string
           translation: string
@@ -69,6 +70,7 @@ export type Database = {
           id?: string
           is_learned?: boolean
           is_public?: boolean
+          learned_at?: string | null
           level: string
           reading: string
           translation: string
@@ -81,6 +83,7 @@ export type Database = {
           id?: string
           is_learned?: boolean
           is_public?: boolean
+          learned_at?: string | null
           level?: string
           reading?: string
           translation?: string
