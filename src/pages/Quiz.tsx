@@ -169,6 +169,13 @@ export default function Quiz() {
       </header>
 
       <main className="container max-w-xl mx-auto px-4 py-16">
+        {current === 0 && (
+          <div className="text-center mb-8 animate-fade-in">
+            <p className="text-sm text-muted-foreground tracking-wider">
+              {useMode === 'cloze' ? 'Step 3: 應用 — 例句填空' : useMode === 'reading' ? 'Step 2: 聽音辨形 — 平假名 → 漢字' : 'Step 1: 基礎 — 漢字 → 中文翻譯'}
+            </p>
+          </div>
+        )}
         {useMode === 'cloze' ? (
           <ClozeQuestion question={q.question} options={q.options} onAnswer={handleAnswer} />
         ) : useMode === 'reading' ? (
