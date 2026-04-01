@@ -39,7 +39,17 @@ export default function QuizSummary({ results, toggleLearned, onReset, onNextGro
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 animate-fade-in">
         <h2 className="text-3xl font-bold">已更新！</h2>
         <p className="text-muted-foreground text-lg">已將 {markedCount} 個單字標記為已習得。</p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
+          {onReset && advanceLabel && (
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10" onClick={onReset}>
+              {advanceLabel} →
+            </Button>
+          )}
+          {onNextGroup && (
+            <Button variant="outline" onClick={onNextGroup} disabled={isLoadingNext}>
+              {isLoadingNext ? '載入中...' : '挑戰下一組 5 個新單字 →'}
+            </Button>
+          )}
           <Button variant="outline" onClick={onReset}>
             <RotateCcw className="w-4 h-4 mr-1" />再試一次
           </Button>
