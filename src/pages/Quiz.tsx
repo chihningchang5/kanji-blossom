@@ -42,13 +42,20 @@ function incrementAttempt(): number {
   return count;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function generateQuiz(dailyWords: VocabularyItem[], allWords: VocabularyItem[]): QuizItem[] {
-  return dailyWords.map((word) => {
-    const wrongOptions = allWords
-      .filter((w) => w.id !== word.id)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-    const options = [...wrongOptions, word].sort(() => Math.random() - 0.5);
+  const questions = shuffle(dailyWords);
+  return questions.map((word) => {
+    const wrongOptions = shuffle(allWords.filter((w) => w.id !== word.id)).slice(0, 3);
+    const options = shuffle([...wrongOptions, word]);
     return { question: word, options };
   });
 }
