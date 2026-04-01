@@ -8,9 +8,10 @@ import type { QuizResult } from '@/pages/Quiz';
 interface Props {
   results: QuizResult[];
   toggleLearned: { mutateAsync: (args: { id: string; is_learned: boolean }) => Promise<void>; isPending: boolean };
-  onReset: () => void;
+  onReset?: () => void;
   onNextGroup?: () => void;
   isLoadingNext?: boolean;
+  advanceLabel?: string;
 }
 
 export default function QuizSummary({ results, toggleLearned, onReset, onNextGroup, isLoadingNext }: Props) {
