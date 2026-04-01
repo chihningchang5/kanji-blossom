@@ -42,13 +42,20 @@ function incrementAttempt(): number {
   return count;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function generateQuiz(dailyWords: VocabularyItem[], allWords: VocabularyItem[]): QuizItem[] {
-  return dailyWords.map((word) => {
-    const wrongOptions = allWords
-      .filter((w) => w.id !== word.id)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-    const options = [...wrongOptions, word].sort(() => Math.random() - 0.5);
+  const questions = shuffle(dailyWords);
+  return questions.map((word) => {
+    const wrongOptions = shuffle(allWords.filter((w) => w.id !== word.id)).slice(0, 3);
+    const options = shuffle([...wrongOptions, word]);
     return { question: word, options };
   });
 }
@@ -66,6 +73,7 @@ export default function Quiz() {
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   // Quiz mode: 0 = kanji→translation, 1 = reading→kanji, 2+ = cloze
   const quizMode = attemptCount === 0 ? 'basic' : attemptCount === 1 ? 'reading' : 'cloze';
+  const canAdvance = attemptCount < 2; // show "advance" button after attempts 0 and 1
 
   const quiz = useMemo(() => {
     if (!dailyWords?.length || !allWords?.length || allWords.length < 4) return [];
@@ -125,9 +133,10 @@ export default function Quiz() {
       <QuizSummary
         results={results}
         toggleLearned={toggleLearned}
-        onReset={reset}
+        onReset={canAdvance ? reset : undefined}
         onNextGroup={handleNextGroup}
         isLoadingNext={isLoadingNext}
+        advanceLabel={canAdvance ? (attemptCount === 1 ? '進階測驗：聽音辨形' : '進階測驗：例句填空') : undefined}
       />
     );
   }
@@ -160,6 +169,13 @@ export default function Quiz() {
       </header>
 
       <main className="container max-w-xl mx-auto px-4 py-16">
+        {current === 0 && (
+          <div className="text-center mb-8 animate-fade-in">
+            <p className="text-sm text-muted-foreground tracking-wider">
+              {useMode === 'cloze' ? 'Step 3: 應用 — 例句填空' : useMode === 'reading' ? 'Step 2: 聽音辨形 — 平假名 → 漢字' : 'Step 1: 基礎 — 漢字 → 中文翻譯'}
+            </p>
+          </div>
+        )}
         {useMode === 'cloze' ? (
           <ClozeQuestion question={q.question} options={q.options} onAnswer={handleAnswer} />
         ) : useMode === 'reading' ? (

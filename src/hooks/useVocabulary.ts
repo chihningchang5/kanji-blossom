@@ -87,7 +87,7 @@ export function useLearnedWords() {
         .select('*')
         .eq('is_learned', true)
         .order('level', { ascending: false })
-        .order('created_at', { ascending: false });
+        .order('learned_at', { ascending: false });
       if (error) throw error;
       return data as unknown as VocabularyItem[];
     },
