@@ -57,11 +57,13 @@ export default function Quiz() {
   const { data: dailyWords, isLoading: l1 } = useDailyWords();
   const { data: allWords, isLoading: l2 } = useVocabulary();
   const toggleLearned = useToggleLearned();
+  const queryClient = useQueryClient();
 
   const [current, setCurrent] = useState(0);
   const [results, setResults] = useState<QuizResult[]>([]);
   const [finished, setFinished] = useState(false);
   const [attemptCount, setAttemptCount] = useState(getAttemptCount);
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
   // Quiz mode: 0 = kanji→translation, 1 = reading→kanji, 2+ = cloze
   const quizMode = attemptCount === 0 ? 'basic' : attemptCount === 1 ? 'reading' : 'cloze';
 
@@ -88,6 +90,23 @@ export default function Quiz() {
     setCurrent(0);
     setResults([]);
     setFinished(false);
+  };
+
+  const handleNextGroup = async () => {
+    setIsLoadingNext(true);
+    // Clear daily words cache so a fresh set is fetched
+    localStorage.removeItem('daily-words-ids');
+    localStorage.removeItem('daily-words-date');
+    // Reset attempt count for the new group
+    localStorage.removeItem(QUIZ_ATTEMPT_KEY);
+    localStorage.removeItem(QUIZ_ATTEMPT_DATE_KEY);
+    setAttemptCount(0);
+    // Invalidate queries to refetch
+    await queryClient.invalidateQueries({ queryKey: ['daily-words'] });
+    setCurrent(0);
+    setResults([]);
+    setFinished(false);
+    setIsLoadingNext(false);
   };
 
   if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
