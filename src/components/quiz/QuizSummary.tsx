@@ -14,7 +14,7 @@ interface Props {
   advanceLabel?: string;
 }
 
-export default function QuizSummary({ results, toggleLearned, onReset, onNextGroup, isLoadingNext }: Props) {
+export default function QuizSummary({ results, toggleLearned, onReset, onNextGroup, isLoadingNext, advanceLabel }: Props) {
   // BUG FIX: Build initial checks from results directly — all correct answers are pre-checked
   const [learnedChecks, setLearnedChecks] = useState<Record<string, boolean>>(() => {
     const checks: Record<string, boolean> = {};
