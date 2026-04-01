@@ -81,13 +81,25 @@ export default function QuizSummary({ results, toggleLearned, onReset, onNextGro
             </label>
           ))}
         </div>
-        <div className="flex gap-3 mt-6 justify-center">
-          <Button variant="outline" onClick={onReset}>
-            <RotateCcw className="w-4 h-4 mr-1" />重新測驗
-          </Button>
-          <Button onClick={handleSubmitLearned} disabled={toggleLearned.isPending}>
-            確認送出 ✓
-          </Button>
+        <div className="flex flex-col items-center gap-3 mt-6">
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onReset}>
+              <RotateCcw className="w-4 h-4 mr-1" />重新測驗
+            </Button>
+            <Button onClick={handleSubmitLearned} disabled={toggleLearned.isPending}>
+              確認送出 ✓
+            </Button>
+          </div>
+          {onNextGroup && (
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/10"
+              onClick={onNextGroup}
+              disabled={isLoadingNext}
+            >
+              {isLoadingNext ? '載入中...' : '挑戰下一組 5 個新單字 →'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
