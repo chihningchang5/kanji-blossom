@@ -126,6 +126,8 @@ export default function Quiz() {
         results={results}
         toggleLearned={toggleLearned}
         onReset={reset}
+        onNextGroup={handleNextGroup}
+        isLoadingNext={isLoadingNext}
       />
     );
   }
