@@ -1,9 +1,10 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { useDailyWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
 import QuizQuestion from '@/components/quiz/QuizQuestion';
 import ReadingToKanjiQuestion from '@/components/quiz/ReadingToKanjiQuestion';
 import QuizSummary from '@/components/quiz/QuizSummary';
