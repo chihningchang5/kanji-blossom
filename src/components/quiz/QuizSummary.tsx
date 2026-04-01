@@ -9,6 +9,8 @@ interface Props {
   results: QuizResult[];
   toggleLearned: { mutateAsync: (args: { id: string; is_learned: boolean }) => Promise<void>; isPending: boolean };
   onReset: () => void;
+  onNextGroup?: () => void;
+  isLoadingNext?: boolean;
 }
 
 export default function QuizSummary({ results, toggleLearned, onReset }: Props) {
