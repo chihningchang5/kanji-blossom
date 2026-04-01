@@ -259,7 +259,7 @@ export default function Learned() {
             {learnedWords.map((w, i) => (
               <div
                 key={w.id}
-                className="bg-card border border-border rounded-lg p-6 text-center space-y-2 animate-fade-in cursor-pointer hover:border-primary transition-colors"
+                className="group bg-card border border-border rounded-lg p-6 text-center space-y-2 animate-fade-in cursor-pointer hover:border-primary transition-colors relative"
                 style={{ animationDelay: `${i * 50}ms` }}
                 onClick={() => setSelectedWord(w)}
               >
@@ -272,7 +272,7 @@ export default function Learned() {
                   </span>
                 </div>
                 {w.learned_at && (
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     習得：{new Date(w.learned_at).toLocaleDateString('zh-TW')}
                   </p>
                 )}
