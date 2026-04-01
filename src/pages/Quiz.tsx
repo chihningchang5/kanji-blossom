@@ -133,9 +133,10 @@ export default function Quiz() {
       <QuizSummary
         results={results}
         toggleLearned={toggleLearned}
-        onReset={reset}
+        onReset={canAdvance ? reset : undefined}
         onNextGroup={handleNextGroup}
         isLoadingNext={isLoadingNext}
+        advanceLabel={canAdvance ? (attemptCount === 1 ? '進階測驗：聽音辨形' : '進階測驗：例句填空') : undefined}
       />
     );
   }
