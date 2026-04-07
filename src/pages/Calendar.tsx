@@ -1,9 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Cherry } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useLearnedWords } from '@/hooks/useVocabulary';
+import { useRewards } from '@/hooks/useRewards';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const DAYS_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -17,17 +24,19 @@ function getFirstDayOfMonth(year: number, month: number) {
 
 export default function Calendar() {
   const { data: learnedWords, isLoading } = useLearnedWords();
+  const { data: rewards } = useRewards();
+  const [rewardOpen, setRewardOpen] = useState(false);
 
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
 
-  // Count learned words per day using learned_at
+  // Count learned words per day using learned_at (all time, not just current month)
   const dailyCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     if (!learnedWords) return counts;
     learnedWords.forEach((w) => {
-      const la = (w as any).learned_at;
+      const la = w.learned_at;
       if (!la) return;
       const d = new Date(la);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -35,6 +44,11 @@ export default function Calendar() {
     });
     return counts;
   }, [learnedWords]);
+
+  // Total stamp days (all time)
+  const totalStampDays = useMemo(() => {
+    return Object.values(dailyCounts).filter(c => c >= 5).length;
+  }, [dailyCounts]);
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
@@ -53,6 +67,17 @@ export default function Calendar() {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   const monthLabel = `${year}年${month + 1}月`;
+
+  // Find unlocked rewards
+  const unlockedRewards = useMemo(() => {
+    if (!rewards) return [];
+    return rewards.filter(r => totalStampDays >= r.unlock_days);
+  }, [rewards, totalStampDays]);
+
+  const nextReward = useMemo(() => {
+    if (!rewards) return null;
+    return rewards.find(r => totalStampDays < r.unlock_days) || null;
+  }, [rewards, totalStampDays]);
 
   return (
     <div className="min-h-screen">
@@ -129,10 +154,66 @@ export default function Calendar() {
           </div>
         </div>
 
+        {/* Reward progress */}
+        <div className="mt-6 bg-card border-2 border-primary/20 rounded-xl p-5 shadow-sm">
+          <h3 className="text-lg font-bold font-serif text-center mb-3">🐱 獎勵進度</h3>
+          <p className="text-center text-sm text-muted-foreground mb-4">
+            累計蓋章天數：<span className="font-bold text-primary">{totalStampDays}</span> 天
+          </p>
+
+          {unlockedRewards.length > 0 && (
+            <div className="text-center mb-4">
+              <Button
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary/10"
+                onClick={() => setRewardOpen(true)}
+              >
+                🎉 查看已解鎖獎勵（{unlockedRewards.length}）
+              </Button>
+            </div>
+          )}
+
+          {nextReward && (
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-4 py-2">
+                <span className="text-sm text-muted-foreground">
+                  再 <span className="font-bold text-primary">{nextReward.unlock_days - totalStampDays}</span> 天解鎖下一個獎勵！
+                </span>
+              </div>
+            </div>
+          )}
+
+          {!nextReward && unlockedRewards.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground">持續學習，累積蓋章天數來解鎖獎勵吧！</p>
+          )}
+        </div>
+
         {isLoading && (
           <p className="text-center text-muted-foreground mt-8">載入中...</p>
         )}
       </main>
+
+      {/* Reward Dialog */}
+      <Dialog open={rewardOpen} onOpenChange={setRewardOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center font-serif text-xl">🎉 おめでとう！</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {unlockedRewards.map((r) => (
+              <div key={r.id} className="text-center space-y-2">
+                <img
+                  src={r.image_url}
+                  alt={r.description}
+                  className="w-full max-h-64 object-cover rounded-lg border-2 border-primary/20"
+                />
+                <p className="text-sm text-muted-foreground">{r.description}</p>
+                <p className="text-xs text-muted-foreground/60">🌸 {r.unlock_days} 天達成</p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
