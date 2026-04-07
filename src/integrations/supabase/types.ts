@@ -32,6 +32,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rewards: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+          unlock_days: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url: string
+          unlock_days?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string
+          unlock_days?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
