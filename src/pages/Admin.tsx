@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Upload, Trash2, Pencil } from 'lucide-react';
+import { Plus, Upload, Trash2, Pencil, Gift } from 'lucide-react';
 import { useVocabulary, useAddVocabulary, useUpdateVocabulary, useDeleteVocabulary, useBulkImport, type VocabularyItem, type ExampleSentence } from '@/hooks/useVocabulary';
+import { useRewards, useAddReward, useDeleteReward } from '@/hooks/useRewards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
