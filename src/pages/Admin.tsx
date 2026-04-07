@@ -64,9 +64,15 @@ export default function Admin() {
   const updateMut = useUpdateVocabulary();
   const deleteMut = useDeleteVocabulary();
   const bulkMut = useBulkImport();
+  const { data: rewards, isLoading: rewardsLoading } = useRewards();
+  const addReward = useAddReward();
+  const deleteReward = useDeleteReward();
   const [jsonText, setJsonText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingExamplesId, setEditingExamplesId] = useState<string | null>(null);
+  const [rewardUrl, setRewardUrl] = useState('');
+  const [rewardDesc, setRewardDesc] = useState('');
+  const [rewardDays, setRewardDays] = useState('25');
 
   const publicWords = words?.filter(w => w.is_public) || [];
 
