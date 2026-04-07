@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Upload, Trash2, Pencil } from 'lucide-react';
+import { Plus, Upload, Trash2, Pencil, Gift } from 'lucide-react';
 import { useVocabulary, useAddVocabulary, useUpdateVocabulary, useDeleteVocabulary, useBulkImport, type VocabularyItem, type ExampleSentence } from '@/hooks/useVocabulary';
+import { useRewards, useAddReward, useDeleteReward } from '@/hooks/useRewards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -63,9 +64,15 @@ export default function Admin() {
   const updateMut = useUpdateVocabulary();
   const deleteMut = useDeleteVocabulary();
   const bulkMut = useBulkImport();
+  const { data: rewards, isLoading: rewardsLoading } = useRewards();
+  const addReward = useAddReward();
+  const deleteReward = useDeleteReward();
   const [jsonText, setJsonText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingExamplesId, setEditingExamplesId] = useState<string | null>(null);
+  const [rewardUrl, setRewardUrl] = useState('');
+  const [rewardDesc, setRewardDesc] = useState('');
+  const [rewardDays, setRewardDays] = useState('25');
 
   const publicWords = words?.filter(w => w.is_public) || [];
 
@@ -277,6 +284,46 @@ export default function Admin() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </section>
+        {/* Reward Management */}
+        <section>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Gift className="w-5 h-5 text-primary" />獎勵圖片管理
+          </h2>
+          <div className="flex flex-wrap gap-2 items-end mb-4">
+            <Input placeholder="圖片 URL" value={rewardUrl} onChange={(e) => setRewardUrl(e.target.value)} className="w-64" />
+            <Input placeholder="說明文字" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} className="w-40" />
+            <Input placeholder="解鎖天數" type="number" value={rewardDays} onChange={(e) => setRewardDays(e.target.value)} className="w-24" />
+            <Button size="sm" onClick={() => {
+              if (!rewardUrl.trim()) { toast.error('請填入圖片 URL'); return; }
+              addReward.mutate({ image_url: rewardUrl.trim(), description: rewardDesc.trim() || '神秘獎勵', unlock_days: Number(rewardDays) || 25 }, {
+                onSuccess: () => { toast.success('獎勵已新增！'); setRewardUrl(''); setRewardDesc(''); setRewardDays('25'); },
+                onError: (e) => toast.error('新增失敗：' + e.message),
+              });
+            }} disabled={addReward.isPending}>新增獎勵</Button>
+          </div>
+
+          {rewardsLoading ? (
+            <p className="text-muted-foreground">載入中...</p>
+          ) : !rewards?.length ? (
+            <p className="text-muted-foreground">尚無獎勵。</p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {rewards.map((r) => (
+                <div key={r.id} className="border border-border rounded-lg p-3 bg-card">
+                  <img src={r.image_url} alt={r.description} className="w-full h-32 object-cover rounded mb-2" />
+                  <p className="text-sm font-medium">{r.description}</p>
+                  <p className="text-xs text-muted-foreground">解鎖天數：{r.unlock_days}</p>
+                  <Button variant="ghost" size="sm" className="text-destructive mt-1" onClick={() => deleteReward.mutate(r.id, {
+                    onSuccess: () => toast.success('已刪除'),
+                    onError: (e) => toast.error(e.message),
+                  })}>
+                    <Trash2 className="w-4 h-4 mr-1" />刪除
+                  </Button>
+                </div>
+              ))}
             </div>
           )}
         </section>
