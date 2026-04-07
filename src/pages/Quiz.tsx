@@ -73,7 +73,7 @@ export default function Quiz() {
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   // Quiz mode: 0 = kanji→translation, 1 = reading→kanji, 2+ = cloze
   const quizMode = attemptCount === 0 ? 'basic' : attemptCount === 1 ? 'reading' : 'cloze';
-  const canAdvance = attemptCount < 2; // show "advance" button after attempts 0 and 1
+  const canAdvance = attemptCount < 3; // show "advance" button after attempts 0, 1, and 2
 
   const quiz = useMemo(() => {
     if (!dailyWords?.length || !allWords?.length || allWords.length < 4) return [];
