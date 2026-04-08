@@ -313,7 +313,9 @@ export default function Admin() {
             <div className="grid gap-4 sm:grid-cols-2">
               {rewards.map((r) => (
                 <div key={r.id} className="border border-border rounded-lg p-3 bg-card">
-                  <img src={r.image_url} alt={r.description} className="w-full h-32 object-cover rounded mb-2" />
+                  <div className="w-full h-32 flex items-center justify-center bg-background rounded mb-2 overflow-hidden">
+                    <img src={r.image_url} alt={r.description} className="max-w-full max-h-full object-contain" />
+                  </div>
                   <p className="text-sm font-medium">{r.description}</p>
                   <p className="text-xs text-muted-foreground">解鎖天數：{r.unlock_days}</p>
                   <Button variant="ghost" size="sm" className="text-destructive mt-1" onClick={() => deleteReward.mutate(r.id, {

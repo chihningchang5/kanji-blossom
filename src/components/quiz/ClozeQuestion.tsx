@@ -49,8 +49,12 @@ export default function ClozeQuestion({ question, options, onAnswer }: Props) {
       <div className="text-center mb-12">
         <p className="text-sm text-muted-foreground mb-4">請選出正確填入空格的詞彙</p>
         <p className="text-2xl font-serif leading-relaxed mb-3">{cloze}</p>
-        <p className="reading-text text-base">{example.reading}</p>
-        <p className="text-sm text-muted-foreground mt-2">{example.translation}</p>
+        {selected && (
+          <>
+            <p className="reading-text text-base">{example.reading}</p>
+            <p className="text-sm text-muted-foreground mt-2">{example.translation}</p>
+          </>
+        )}
       </div>
 
       {selected && (
