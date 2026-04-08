@@ -207,7 +207,8 @@ export default function Calendar() {
                     src={r.image_url}
                     alt={r.description}
                     className="max-w-full max-h-64 object-contain"
-                />
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground">{r.description}</p>
                 <p className="text-xs text-muted-foreground/60">🌸 {r.unlock_days} 天達成</p>
               </div>
