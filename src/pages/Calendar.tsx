@@ -202,11 +202,13 @@ export default function Calendar() {
           <div className="space-y-4 mt-2">
             {unlockedRewards.map((r) => (
               <div key={r.id} className="text-center space-y-2">
-                <img
-                  src={r.image_url}
-                  alt={r.description}
-                  className="w-full max-h-64 object-cover rounded-lg border-2 border-primary/20"
-                />
+                <div className="w-full max-h-64 flex items-center justify-center bg-background rounded-lg border-2 border-primary/20 overflow-hidden">
+                  <img
+                    src={r.image_url}
+                    alt={r.description}
+                    className="max-w-full max-h-64 object-contain"
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground">{r.description}</p>
                 <p className="text-xs text-muted-foreground/60">🌸 {r.unlock_days} 天達成</p>
               </div>
