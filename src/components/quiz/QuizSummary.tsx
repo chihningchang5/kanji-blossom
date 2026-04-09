@@ -9,13 +9,13 @@ interface Props {
   results: QuizResult[];
   toggleLearned: { mutateAsync: (args: { id: string; is_learned: boolean }) => Promise<void>; isPending: boolean };
   onReset?: () => void;
+  onRetry?: () => void;
   onNextGroup?: () => void;
   isLoadingNext?: boolean;
   advanceLabel?: string;
 }
 
-export default function QuizSummary({ results, toggleLearned, onReset, onNextGroup, isLoadingNext, advanceLabel }: Props) {
-  // BUG FIX: Build initial checks from results directly — all correct answers are pre-checked
+export default function QuizSummary({ results, toggleLearned, onReset, onRetry, onNextGroup, isLoadingNext, advanceLabel }: Props) {
   const [learnedChecks, setLearnedChecks] = useState<Record<string, boolean>>(() => {
     const checks: Record<string, boolean> = {};
     results.forEach(r => { checks[r.word.id] = r.correct; });
@@ -24,6 +24,7 @@ export default function QuizSummary({ results, toggleLearned, onReset, onNextGro
   const [submitted, setSubmitted] = useState(false);
 
   const correctCount = results.filter(r => r.correct).length;
+  const wrongCount = results.length - correctCount;
 
   const handleSubmitLearned = async () => {
     const toMark = Object.entries(learnedChecks).filter(([, v]) => v);
@@ -45,14 +46,16 @@ export default function QuizSummary({ results, toggleLearned, onReset, onNextGro
               {advanceLabel} →
             </Button>
           )}
+          {wrongCount >= 3 && onRetry && (
+            <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={onRetry}>
+              <RotateCcw className="w-4 h-4 mr-1" />重新練習
+            </Button>
+          )}
           {onNextGroup && (
             <Button variant="outline" onClick={onNextGroup} disabled={isLoadingNext}>
               {isLoadingNext ? '載入中...' : '挑戰下一組 5 個新單字 →'}
             </Button>
           )}
-          <Button variant="outline" onClick={onReset}>
-            <RotateCcw className="w-4 h-4 mr-1" />再試一次
-          </Button>
           <Button asChild><Link to="/">回到首頁</Link></Button>
         </div>
       </div>
@@ -102,6 +105,11 @@ export default function QuizSummary({ results, toggleLearned, onReset, onNextGro
             {onReset && advanceLabel && (
               <Button variant="outline" className="border-primary text-primary hover:bg-primary/10" onClick={onReset}>
                 {advanceLabel} →
+              </Button>
+            )}
+            {wrongCount >= 3 && onRetry && (
+              <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={onRetry}>
+                <RotateCcw className="w-4 h-4 mr-1" />重新練習
               </Button>
             )}
             {onNextGroup && (

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useDailyWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
@@ -71,15 +71,17 @@ export default function Quiz() {
   const [finished, setFinished] = useState(false);
   const [attemptCount, setAttemptCount] = useState(getAttemptCount);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const [quizSeed, setQuizSeed] = useState(0); // force regenerate quiz on retry
+
   // Quiz mode: 0 = kanji→translation, 1 = reading→kanji, 2+ = cloze
   const quizMode = attemptCount === 0 ? 'basic' : attemptCount === 1 ? 'reading' : 'cloze';
-  const canAdvance = attemptCount < 3; // show "advance" button after attempts 0, 1, and 2
+  const canAdvance = attemptCount < 3;
 
   const quiz = useMemo(() => {
     if (!dailyWords?.length || !allWords?.length || allWords.length < 4) return [];
     return generateQuiz(dailyWords, allWords);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dailyWords?.map(w => w.id).join(','), allWords?.length]);
+  }, [dailyWords?.map(w => w.id).join(','), allWords?.length, quizSeed]);
 
   const handleAnswer = useCallback((correct: boolean, word: VocabularyItem) => {
     const newResults = [...results, { correct, word }];
@@ -94,26 +96,40 @@ export default function Quiz() {
     }
   }, [current, quiz.length, results]);
 
-  const reset = () => {
+  // Advance to next difficulty stage (increments test_count)
+  const handleAdvance = () => {
     setCurrent(0);
     setResults([]);
     setFinished(false);
+    setQuizSeed(s => s + 1);
+  };
+
+  // Retry same mode without incrementing test_count
+  const handleRetry = () => {
+    // Roll back the attempt count that was incremented when finishing
+    const currentCount = getAttemptCount();
+    if (currentCount > 0) {
+      localStorage.setItem(QUIZ_ATTEMPT_KEY, String(currentCount - 1));
+      setAttemptCount(currentCount - 1);
+    }
+    setCurrent(0);
+    setResults([]);
+    setFinished(false);
+    setQuizSeed(s => s + 1);
   };
 
   const handleNextGroup = async () => {
     setIsLoadingNext(true);
-    // Clear daily words cache so a fresh set is fetched
     localStorage.removeItem('daily-words-ids');
     localStorage.removeItem('daily-words-date');
-    // Reset attempt count for the new group
     localStorage.removeItem(QUIZ_ATTEMPT_KEY);
     localStorage.removeItem(QUIZ_ATTEMPT_DATE_KEY);
     setAttemptCount(0);
-    // Invalidate queries to refetch
     await queryClient.invalidateQueries({ queryKey: ['daily-words'] });
     setCurrent(0);
     setResults([]);
     setFinished(false);
+    setQuizSeed(s => s + 1);
     setIsLoadingNext(false);
   };
 
@@ -133,10 +149,11 @@ export default function Quiz() {
       <QuizSummary
         results={results}
         toggleLearned={toggleLearned}
-        onReset={canAdvance ? reset : undefined}
+        onReset={canAdvance ? handleAdvance : undefined}
+        onRetry={handleRetry}
         onNextGroup={handleNextGroup}
         isLoadingNext={isLoadingNext}
-        advanceLabel={canAdvance ? (attemptCount === 1 ? '進階測驗：聽音辨形' : '進階測驗：例句填空') : undefined}
+        advanceLabel={canAdvance ? (attemptCount === 1 ? '進階測驗：聽音辨形' : attemptCount === 2 ? '進階測驗：例句填空' : undefined) : undefined}
       />
     );
   }
