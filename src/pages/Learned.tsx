@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, BookCheck, Swords } from 'lucide-react';
-import { useLearnedWords, useVocabulary, useToggleLearned, type VocabularyItem } from '@/hooks/useVocabulary';
+import { useLearnedWords, useVocabulary, useToggleLearned, useMarkReviewed, type VocabularyItem } from '@/hooks/useVocabulary';
 import AppHeader from '@/components/AppHeader';
 import { speakJapanese } from '@/lib/speech';
 import { Button } from '@/components/ui/button';
@@ -25,11 +25,14 @@ interface ReviewQuestion {
 }
 
 function generateReviewQuiz(learned: VocabularyItem[], all: VocabularyItem[], count: number): ReviewQuestion[] {
-  // Sort by learned_at ascending (oldest first) for spaced repetition
+  // Priority: last_reviewed_at NULL first, then oldest last_reviewed_at, then oldest learned_at
   const sorted = [...learned].sort((a, b) => {
-    const da = a.learned_at ? new Date(a.learned_at).getTime() : 0;
-    const db = b.learned_at ? new Date(b.learned_at).getTime() : 0;
-    return da - db;
+    const ra = a.last_reviewed_at ? new Date(a.last_reviewed_at).getTime() : 0;
+    const rb = b.last_reviewed_at ? new Date(b.last_reviewed_at).getTime() : 0;
+    if (ra !== rb) return ra - rb; // NULL (0) first, then oldest
+    const la = a.learned_at ? new Date(a.learned_at).getTime() : 0;
+    const lb = b.learned_at ? new Date(b.learned_at).getTime() : 0;
+    return la - lb;
   });
   const selected = sorted.slice(0, count);
 
@@ -53,6 +56,7 @@ export default function Learned() {
   const { data: learnedWords, isLoading: l1 } = useLearnedWords();
   const { data: allWords, isLoading: l2 } = useVocabulary();
   const toggleLearned = useToggleLearned();
+  const markReviewed = useMarkReviewed();
 
   const [showQuiz, setShowQuiz] = useState(false);
   const [showCountPicker, setShowCountPicker] = useState(false);
@@ -73,6 +77,9 @@ export default function Learned() {
   const advance = useCallback(() => {
     if (current + 1 >= quiz.length) {
       setFinished(true);
+      // Mark all reviewed words' last_reviewed_at
+      const reviewedIds = quiz.map(q => q.word.id);
+      markReviewed.mutate(reviewedIds);
       if (wrongAnswers.length > 0) {
         setUnlearnPrompt(wrongAnswers);
       }
@@ -80,7 +87,7 @@ export default function Learned() {
       setCurrent((c) => c + 1);
       setSelected(null);
     }
-  }, [current, quiz.length, wrongAnswers]);
+  }, [current, quiz, wrongAnswers, markReviewed]);
 
   const handleSelect = useCallback((option: string) => {
     if (selected) return;
