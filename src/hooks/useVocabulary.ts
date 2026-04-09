@@ -19,6 +19,7 @@ export interface VocabularyItem {
   examples: ExampleSentence[];
   created_at: string;
   learned_at: string | null;
+  last_reviewed_at: string | null;
 }
 
 export function useVocabulary() {
@@ -143,6 +144,22 @@ export function useDeleteVocabulary() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['vocabulary'] }),
+  });
+}
+
+export function useMarkReviewed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('vocabulary')
+        .update({ last_reviewed_at: new Date().toISOString() } as any)
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['learned-words'] });
+    },
   });
 }
 
