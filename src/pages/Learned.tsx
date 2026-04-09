@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
-type QuizMode = 'A' | 'B'; // A: reading→translation, B: translation→reading
+type QuizMode = 'A' | 'B';
 
 interface ReviewQuestion {
   word: VocabularyItem;
@@ -24,8 +24,16 @@ interface ReviewQuestion {
   answer: string;
 }
 
-function generateReviewQuiz(learned: VocabularyItem[], all: VocabularyItem[]): ReviewQuestion[] {
-  return learned.map((word) => {
+function generateReviewQuiz(learned: VocabularyItem[], all: VocabularyItem[], count: number): ReviewQuestion[] {
+  // Sort by learned_at ascending (oldest first) for spaced repetition
+  const sorted = [...learned].sort((a, b) => {
+    const da = a.learned_at ? new Date(a.learned_at).getTime() : 0;
+    const db = b.learned_at ? new Date(b.learned_at).getTime() : 0;
+    return da - db;
+  });
+  const selected = sorted.slice(0, count);
+
+  return selected.map((word) => {
     const mode: QuizMode = Math.random() > 0.5 ? 'A' : 'B';
     const others = all.filter((w) => w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, 3);
 
@@ -47,6 +55,8 @@ export default function Learned() {
   const toggleLearned = useToggleLearned();
 
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showCountPicker, setShowCountPicker] = useState(false);
+  const [quizCount, setQuizCount] = useState(10);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [wrongAnswers, setWrongAnswers] = useState<VocabularyItem[]>([]);
@@ -57,8 +67,8 @@ export default function Learned() {
 
   const quiz = useMemo(() => {
     if (!showQuiz || !learnedWords?.length || !allWords?.length || allWords.length < 4) return [];
-    return generateReviewQuiz(learnedWords, allWords);
-  }, [showQuiz, learnedWords, allWords]);
+    return generateReviewQuiz(learnedWords, allWords, quizCount);
+  }, [showQuiz, learnedWords, allWords, quizCount]);
 
   const advance = useCallback(() => {
     if (current + 1 >= quiz.length) {
@@ -105,6 +115,18 @@ export default function Learned() {
 
   const stopQuiz = () => {
     setShowQuiz(false);
+    setShowCountPicker(false);
+    setCurrent(0);
+    setSelected(null);
+    setResults([]);
+    setWrongAnswers([]);
+    setFinished(false);
+  };
+
+  const startQuiz = (count: number) => {
+    setQuizCount(count);
+    setShowCountPicker(false);
+    setShowQuiz(true);
     setCurrent(0);
     setSelected(null);
     setResults([]);
@@ -113,6 +135,28 @@ export default function Learned() {
   };
 
   if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
+
+  // Count picker dialog
+  if (showCountPicker) {
+    const total = learnedWords?.length || 0;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 animate-fade-in">
+        <h2 className="text-2xl font-bold font-serif">複習測驗</h2>
+        <p className="text-muted-foreground text-sm">選擇本次複習題數（優先出最久未複習的單字）</p>
+        <div className="flex flex-col gap-3 w-48">
+          {[10, 20].filter(n => n <= total).map(n => (
+            <Button key={n} variant="outline" className="text-lg" onClick={() => startQuiz(n)}>
+              {n} 題
+            </Button>
+          ))}
+          <Button variant="outline" className="text-lg" onClick={() => startQuiz(total)}>
+            全部（{total} 題）
+          </Button>
+          <Button variant="ghost" onClick={stopQuiz} className="mt-2">取消</Button>
+        </div>
+      </div>
+    );
+  }
 
   // Review quiz view
   if (showQuiz) {
@@ -141,7 +185,7 @@ export default function Learned() {
               答錯 {wrongAnswers.length} 題：{wrongAnswers.map((w) => w.word).join('、')}
             </p>
           )}
-          <div className="flex gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             <Button variant="outline" onClick={resetQuiz}>
               <RotateCcw className="w-4 h-4 mr-1" />再試一次
             </Button>
@@ -228,7 +272,7 @@ export default function Learned() {
       <AppHeader />
       <div className="container max-w-4xl mx-auto px-4 py-4 flex justify-end">
           {learnedWords && learnedWords.length >= 4 && (
-            <Button size="sm" onClick={() => setShowQuiz(true)}>
+            <Button size="sm" onClick={() => setShowCountPicker(true)}>
               <Swords className="w-4 h-4 mr-1" />複習測驗
             </Button>
           )}
