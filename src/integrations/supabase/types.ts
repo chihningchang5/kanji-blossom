@@ -81,6 +81,7 @@ export type Database = {
           id: string
           is_learned: boolean
           is_public: boolean
+          last_reviewed_at: string | null
           learned_at: string | null
           level: string
           reading: string
@@ -94,6 +95,7 @@ export type Database = {
           id?: string
           is_learned?: boolean
           is_public?: boolean
+          last_reviewed_at?: string | null
           learned_at?: string | null
           level: string
           reading: string
@@ -107,6 +109,7 @@ export type Database = {
           id?: string
           is_learned?: boolean
           is_public?: boolean
+          last_reviewed_at?: string | null
           learned_at?: string | null
           level?: string
           reading?: string
