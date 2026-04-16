@@ -22,18 +22,49 @@ export interface VocabularyItem {
   last_reviewed_at: string | null;
 }
 
+// Helper to get current user id
+async function getCurrentUserId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
+}
+
+// Merge vocabulary rows with per-user progress
+async function fetchVocabWithProgress(): Promise<VocabularyItem[]> {
+  const userId = await getCurrentUserId();
+
+  const { data: vocab, error: ve } = await supabase
+    .from('vocabulary')
+    .select('*')
+    .order('level', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (ve) throw ve;
+
+  if (!userId) return (vocab as unknown as VocabularyItem[]).map(v => ({ ...v, is_learned: false, learned_at: null, last_reviewed_at: null }));
+
+  const { data: progress, error: pe } = await supabase
+    .from('user_word_progress')
+    .select('*')
+    .eq('user_id', userId);
+  if (pe) throw pe;
+
+  const progressMap = new Map<string, any>();
+  (progress || []).forEach((p: any) => progressMap.set(p.vocabulary_id, p));
+
+  return (vocab as unknown as VocabularyItem[]).map(v => {
+    const p = progressMap.get(v.id);
+    return {
+      ...v,
+      is_learned: p?.is_learned ?? false,
+      learned_at: p?.learned_at ?? null,
+      last_reviewed_at: p?.last_reviewed_at ?? null,
+    };
+  });
+}
+
 export function useVocabulary() {
   return useQuery({
     queryKey: ['vocabulary'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vocabulary')
-        .select('*')
-        .order('level', { ascending: false })
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as unknown as VocabularyItem[];
-    },
+    queryFn: fetchVocabWithProgress,
   });
 }
 
@@ -44,29 +75,21 @@ export function useDailyWords() {
   return useQuery({
     queryKey: ['daily-words', new Date().toDateString()],
     queryFn: async () => {
+      const allWithProgress = await fetchVocabWithProgress();
       const today = new Date().toDateString();
       const storedDate = localStorage.getItem(DAILY_WORDS_DATE_KEY);
       const storedIds = localStorage.getItem(DAILY_WORDS_KEY);
 
       if (storedDate === today && storedIds) {
         const ids: string[] = JSON.parse(storedIds);
-        const { data, error } = await supabase
-          .from('vocabulary')
-          .select('*')
-          .in('id', ids);
-        if (error) throw error;
-        const items = data as unknown as VocabularyItem[];
-        // Return the same 5 words all day, even if some are marked learned
+        const idSet = new Set(ids);
+        const items = allWithProgress.filter(w => idSet.has(w.id));
         if (items.length > 0) return items;
       }
 
-      const { data, error } = await supabase
-        .from('vocabulary')
-        .select('*')
-        .eq('is_learned', false);
-      if (error) throw error;
-      const items = data as unknown as VocabularyItem[];
-      const shuffled = items.sort(() => Math.random() - 0.5);
+      // Pick 5 unlearned words
+      const unlearned = allWithProgress.filter(w => !w.is_learned);
+      const shuffled = unlearned.sort(() => Math.random() - 0.5);
       const picked = shuffled.slice(0, 5);
 
       localStorage.setItem(DAILY_WORDS_DATE_KEY, today);
@@ -83,14 +106,15 @@ export function useLearnedWords() {
   return useQuery({
     queryKey: ['learned-words'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vocabulary')
-        .select('*')
-        .eq('is_learned', true)
-        .order('level', { ascending: false })
-        .order('learned_at', { ascending: false });
-      if (error) throw error;
-      return data as unknown as VocabularyItem[];
+      const all = await fetchVocabWithProgress();
+      return all
+        .filter(w => w.is_learned)
+        .sort((a, b) => {
+          // Sort by learned_at descending
+          const la = a.learned_at ? new Date(a.learned_at).getTime() : 0;
+          const lb = b.learned_at ? new Date(b.learned_at).getTime() : 0;
+          return lb - la;
+        });
     },
   });
 }
@@ -110,7 +134,9 @@ export function useUpdateVocabulary() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...item }: Partial<VocabularyItem> & { id: string }) => {
-      const { error } = await supabase.from('vocabulary').update(item as any).eq('id', id);
+      // Only update vocabulary-level fields, not progress fields
+      const { is_learned, learned_at, last_reviewed_at, ...vocabFields } = item as any;
+      const { error } = await supabase.from('vocabulary').update(vocabFields).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -121,11 +147,20 @@ export function useUpdateVocabulary() {
   });
 }
 
+// Toggle learned state via user_word_progress (per-user)
 export function useToggleLearned() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, is_learned }: { id: string; is_learned: boolean }) => {
-      const { error } = await supabase.from('vocabulary').update({ is_learned }).eq('id', id);
+      const userId = await getCurrentUserId();
+      if (!userId) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('user_word_progress')
+        .upsert(
+          { user_id: userId, vocabulary_id: id, is_learned } as any,
+          { onConflict: 'user_id,vocabulary_id' }
+        );
       if (error) throw error;
     },
     onSuccess: () => {
@@ -147,15 +182,25 @@ export function useDeleteVocabulary() {
   });
 }
 
+// Mark words as reviewed (per-user)
 export function useMarkReviewed() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase
-        .from('vocabulary')
-        .update({ last_reviewed_at: new Date().toISOString() } as any)
-        .in('id', ids);
-      if (error) throw error;
+      const userId = await getCurrentUserId();
+      if (!userId) throw new Error('Not authenticated');
+
+      const now = new Date().toISOString();
+      // Upsert progress rows with last_reviewed_at
+      for (const vocabId of ids) {
+        const { error } = await supabase
+          .from('user_word_progress')
+          .upsert(
+            { user_id: userId, vocabulary_id: vocabId, last_reviewed_at: now } as any,
+            { onConflict: 'user_id,vocabulary_id' }
+          );
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['learned-words'] });
