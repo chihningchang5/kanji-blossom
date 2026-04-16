@@ -56,8 +56,8 @@ export function useDailyWords() {
           .in('id', ids);
         if (error) throw error;
         const items = data as unknown as VocabularyItem[];
-        const stillValid = items.filter(w => !w.is_learned);
-        if (stillValid.length > 0) return stillValid;
+        // Return the same 5 words all day, even if some are marked learned
+        if (items.length > 0) return items;
       }
 
       const { data, error } = await supabase
