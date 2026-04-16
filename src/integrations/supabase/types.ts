@@ -74,6 +74,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_word_progress: {
+        Row: {
+          created_at: string
+          id: string
+          is_learned: boolean
+          last_reviewed_at: string | null
+          learned_at: string | null
+          user_id: string
+          vocabulary_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_learned?: boolean
+          last_reviewed_at?: string | null
+          learned_at?: string | null
+          user_id: string
+          vocabulary_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_learned?: boolean
+          last_reviewed_at?: string | null
+          learned_at?: string | null
+          user_id?: string
+          vocabulary_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_word_progress_vocabulary_id_fkey"
+            columns: ["vocabulary_id"]
+            isOneToOne: false
+            referencedRelation: "vocabulary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vocabulary: {
         Row: {
           created_at: string
