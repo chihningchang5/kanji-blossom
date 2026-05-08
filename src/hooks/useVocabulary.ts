@@ -23,6 +23,11 @@ export interface VocabularyItem {
   last_reviewed_at: string | null;
 }
 
+async function getCurrentUserId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
+}
+
 // Merge vocabulary rows with per-user progress
 async function fetchVocabWithProgress(userId: string | null): Promise<VocabularyItem[]> {
   const { data: vocab, error: ve } = await supabase
