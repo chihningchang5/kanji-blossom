@@ -53,8 +53,8 @@ function generateReviewQuiz(learned: VocabularyItem[], all: VocabularyItem[], co
 }
 
 export default function Learned() {
-  const { data: learnedWords, isLoading: l1 } = useLearnedWords();
-  const { data: allWords, isLoading: l2 } = useVocabulary();
+  const { data: learnedWords, isLoading: l1, isError: e1, error: er1 } = useLearnedWords();
+  const { data: allWords, isLoading: l2, isError: e2 } = useVocabulary();
   const toggleLearned = useToggleLearned();
   const markReviewed = useMarkReviewed();
 
