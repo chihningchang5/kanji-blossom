@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthReady } from './useAuthReady';
 
 export interface ExampleSentence {
   sentence: string;
@@ -22,16 +23,13 @@ export interface VocabularyItem {
   last_reviewed_at: string | null;
 }
 
-// Helper to get current user id
 async function getCurrentUserId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   return user?.id ?? null;
 }
 
 // Merge vocabulary rows with per-user progress
-async function fetchVocabWithProgress(): Promise<VocabularyItem[]> {
-  const userId = await getCurrentUserId();
-
+async function fetchVocabWithProgress(userId: string | null): Promise<VocabularyItem[]> {
   const { data: vocab, error: ve } = await supabase
     .from('vocabulary')
     .select('*')
@@ -62,9 +60,11 @@ async function fetchVocabWithProgress(): Promise<VocabularyItem[]> {
 }
 
 export function useVocabulary() {
+  const { user, isReady } = useAuthReady();
   return useQuery({
-    queryKey: ['vocabulary'],
-    queryFn: fetchVocabWithProgress,
+    queryKey: ['vocabulary', user?.id ?? 'anon'],
+    queryFn: () => fetchVocabWithProgress(user?.id ?? null),
+    enabled: isReady,
   });
 }
 
@@ -72,10 +72,11 @@ const DAILY_WORDS_KEY = 'daily-words-ids';
 const DAILY_WORDS_DATE_KEY = 'daily-words-date';
 
 export function useDailyWords() {
+  const { user, isReady } = useAuthReady();
   return useQuery({
-    queryKey: ['daily-words', new Date().toDateString()],
+    queryKey: ['daily-words', user?.id ?? 'anon', new Date().toDateString()],
     queryFn: async () => {
-      const allWithProgress = await fetchVocabWithProgress();
+      const allWithProgress = await fetchVocabWithProgress(user?.id ?? null);
       const today = new Date().toDateString();
       const storedDate = localStorage.getItem(DAILY_WORDS_DATE_KEY);
       const storedIds = localStorage.getItem(DAILY_WORDS_KEY);
@@ -87,7 +88,6 @@ export function useDailyWords() {
         if (items.length > 0) return items;
       }
 
-      // Pick 5 unlearned words
       const unlearned = allWithProgress.filter(w => !w.is_learned);
       const shuffled = unlearned.sort(() => Math.random() - 0.5);
       const picked = shuffled.slice(0, 5);
@@ -97,25 +97,27 @@ export function useDailyWords() {
 
       return picked;
     },
+    enabled: isReady,
     staleTime: Infinity,
     gcTime: Infinity,
   });
 }
 
 export function useLearnedWords() {
+  const { user, isReady } = useAuthReady();
   return useQuery({
-    queryKey: ['learned-words'],
+    queryKey: ['learned-words', user?.id ?? 'anon'],
     queryFn: async () => {
-      const all = await fetchVocabWithProgress();
+      const all = await fetchVocabWithProgress(user?.id ?? null);
       return all
         .filter(w => w.is_learned)
         .sort((a, b) => {
-          // Sort by learned_at descending
           const la = a.learned_at ? new Date(a.learned_at).getTime() : 0;
           const lb = b.learned_at ? new Date(b.learned_at).getTime() : 0;
           return lb - la;
         });
     },
+    enabled: isReady && !!user,
   });
 }
 

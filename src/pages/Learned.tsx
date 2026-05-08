@@ -53,8 +53,8 @@ function generateReviewQuiz(learned: VocabularyItem[], all: VocabularyItem[], co
 }
 
 export default function Learned() {
-  const { data: learnedWords, isLoading: l1 } = useLearnedWords();
-  const { data: allWords, isLoading: l2 } = useVocabulary();
+  const { data: learnedWords, isLoading: l1, isError: e1, error: er1 } = useLearnedWords();
+  const { data: allWords, isLoading: l2, isError: e2 } = useVocabulary();
   const toggleLearned = useToggleLearned();
   const markReviewed = useMarkReviewed();
 
@@ -141,7 +141,8 @@ export default function Learned() {
     setFinished(false);
   };
 
-  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
+  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">連線中...</div>;
+  if (e1 || e2) return <div className="min-h-screen flex flex-col items-center justify-center gap-2 text-muted-foreground"><p>連線失敗，請稍後再試</p><p className="text-xs">{er1 instanceof Error ? er1.message : ''}</p></div>;
 
   // Count picker dialog
   if (showCountPicker) {
