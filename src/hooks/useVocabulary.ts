@@ -23,16 +23,8 @@ export interface VocabularyItem {
   last_reviewed_at: string | null;
 }
 
-// Helper to get current user id
-async function getCurrentUserId(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
-
 // Merge vocabulary rows with per-user progress
-async function fetchVocabWithProgress(): Promise<VocabularyItem[]> {
-  const userId = await getCurrentUserId();
-
+async function fetchVocabWithProgress(userId: string | null): Promise<VocabularyItem[]> {
   const { data: vocab, error: ve } = await supabase
     .from('vocabulary')
     .select('*')
@@ -63,9 +55,11 @@ async function fetchVocabWithProgress(): Promise<VocabularyItem[]> {
 }
 
 export function useVocabulary() {
+  const { user, isReady } = useAuthReady();
   return useQuery({
-    queryKey: ['vocabulary'],
-    queryFn: fetchVocabWithProgress,
+    queryKey: ['vocabulary', user?.id ?? 'anon'],
+    queryFn: () => fetchVocabWithProgress(user?.id ?? null),
+    enabled: isReady,
   });
 }
 
