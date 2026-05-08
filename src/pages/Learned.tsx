@@ -141,7 +141,8 @@ export default function Learned() {
     setFinished(false);
   };
 
-  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
+  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">連線中...</div>;
+  if (e1 || e2) return <div className="min-h-screen flex flex-col items-center justify-center gap-2 text-muted-foreground"><p>連線失敗，請稍後再試</p><p className="text-xs">{er1 instanceof Error ? er1.message : ''}</p></div>;
 
   // Count picker dialog
   if (showCountPicker) {
