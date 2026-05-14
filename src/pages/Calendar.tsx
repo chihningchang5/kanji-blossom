@@ -143,7 +143,7 @@ export default function Calendar() {
               const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const count = dailyCounts[key] || 0;
               const hasStamp = count >= 5;
-              const isToday = day === now.getDate();
+              const isToday = viewOffset === 0 && day === now.getDate();
 
               return (
                 <div
