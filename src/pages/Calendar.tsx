@@ -105,8 +105,26 @@ export default function Calendar() {
 
         {/* Calendar Card */}
         <div className="bg-card border-2 border-primary/20 rounded-xl p-5 shadow-sm">
-          <div className="text-center mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewOffset((o) => o - 1)}
+              disabled={!canGoPrev}
+              aria-label="前月"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
             <h3 className="text-lg font-bold font-serif text-foreground">{monthLabel}</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewOffset((o) => o + 1)}
+              disabled={!canGoNext}
+              aria-label="次月"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Day headers */}
