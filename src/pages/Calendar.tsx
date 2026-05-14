@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLearnedWords } from '@/hooks/useVocabulary';
 import { useRewards } from '@/hooks/useRewards';
 import AppHeader from '@/components/AppHeader';
