@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLearnedWords } from '@/hooks/useVocabulary';
 import { useRewards } from '@/hooks/useRewards';
 import AppHeader from '@/components/AppHeader';
@@ -28,8 +28,17 @@ export default function Calendar() {
   const [rewardOpen, setRewardOpen] = useState(false);
 
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  // Allow navigation up to 12 months in the past
+  const [viewOffset, setViewOffset] = useState(0); // 0 = current month, -1 = last month, etc.
+  const viewDate = new Date(currentYear, currentMonth + viewOffset, 1);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const canGoPrev = viewOffset > -11;
+  const canGoNext = viewOffset < 0;
 
   // Count learned words per day using learned_at (all time, not just current month)
   const dailyCounts = useMemo(() => {
@@ -96,8 +105,26 @@ export default function Calendar() {
 
         {/* Calendar Card */}
         <div className="bg-card border-2 border-primary/20 rounded-xl p-5 shadow-sm">
-          <div className="text-center mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewOffset((o) => o - 1)}
+              disabled={!canGoPrev}
+              aria-label="前月"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
             <h3 className="text-lg font-bold font-serif text-foreground">{monthLabel}</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewOffset((o) => o + 1)}
+              disabled={!canGoNext}
+              aria-label="次月"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Day headers */}
@@ -116,7 +143,7 @@ export default function Calendar() {
               const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const count = dailyCounts[key] || 0;
               const hasStamp = count >= 5;
-              const isToday = day === now.getDate();
+              const isToday = viewOffset === 0 && day === now.getDate();
 
               return (
                 <div
