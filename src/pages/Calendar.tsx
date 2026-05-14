@@ -28,8 +28,17 @@ export default function Calendar() {
   const [rewardOpen, setRewardOpen] = useState(false);
 
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  // Allow navigation up to 12 months in the past
+  const [viewOffset, setViewOffset] = useState(0); // 0 = current month, -1 = last month, etc.
+  const viewDate = new Date(currentYear, currentMonth + viewOffset, 1);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const canGoPrev = viewOffset > -11;
+  const canGoNext = viewOffset < 0;
 
   // Count learned words per day using learned_at (all time, not just current month)
   const dailyCounts = useMemo(() => {
