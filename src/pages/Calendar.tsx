@@ -91,7 +91,7 @@ export default function Calendar() {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <main className="container max-w-lg mx-auto px-4 py-8">
+      <main className="container mx-auto max-w-xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/"><ArrowLeft className="w-4 h-4 mr-1" />首頁</Link>
@@ -104,7 +104,7 @@ export default function Calendar() {
         </div>
 
         {/* Calendar Card */}
-        <div className="bg-card border-2 border-primary/20 rounded-xl p-5 shadow-sm">
+        <div className="rounded-2xl border-2 border-primary/20 bg-card p-4 shadow-sm sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <Button
               variant="ghost"
@@ -115,7 +115,7 @@ export default function Calendar() {
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <h3 className="text-lg font-bold font-serif text-foreground">{monthLabel}</h3>
+            <h3 className="text-base font-bold font-serif text-foreground sm:text-lg">{monthLabel}</h3>
             <Button
               variant="ghost"
               size="icon"
@@ -128,9 +128,9 @@ export default function Calendar() {
           </div>
 
           {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="mb-2 grid grid-cols-7 gap-1">
             {DAYS_OF_WEEK.map((d) => (
-              <div key={d} className={`text-center text-xs font-medium py-1 ${d === '日' ? 'text-primary' : d === '土' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+              <div key={d} className={`py-1 text-center text-[11px] font-medium sm:text-xs ${d === '日' ? 'text-primary' : d === '土' ? 'text-blue-500' : 'text-muted-foreground'}`}>
                 {d}
               </div>
             ))}
@@ -148,7 +148,7 @@ export default function Calendar() {
               return (
                 <div
                   key={day}
-                  className={`relative aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-all
+                  className={`relative aspect-square min-h-[42px] flex flex-col items-center justify-center rounded-lg text-sm transition-all
                     ${isToday ? 'ring-2 ring-primary/40' : ''}
                     ${hasStamp ? 'bg-primary/5' : 'hover:bg-accent/30'}
                   `}
@@ -182,7 +182,7 @@ export default function Calendar() {
         </div>
 
         {/* Reward progress */}
-        <div className="mt-6 bg-card border-2 border-primary/20 rounded-xl p-5 shadow-sm">
+        <div className="mt-6 rounded-2xl border-2 border-primary/20 bg-card p-5 shadow-sm">
           <h3 className="text-lg font-bold font-serif text-center mb-3">🐱 獎勵進度</h3>
           <p className="text-center text-sm text-muted-foreground mb-4">
             累計蓋章天數：<span className="font-bold text-primary">{totalStampDays}</span> 天

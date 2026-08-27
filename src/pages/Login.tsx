@@ -17,7 +17,7 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     const { error } = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${window.location.pathname}`,
     });
     if (error) {
       console.error('Login error:', error);

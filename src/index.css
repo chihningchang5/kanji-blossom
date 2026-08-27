@@ -86,12 +86,16 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
   }
 
   h1, h2, h3 {
     font-family: var(--font-serif);
+  }
+
+  #root {
+    min-height: 100vh;
   }
 }
 
@@ -103,11 +107,11 @@
 
   .reading-text {
     font-family: var(--font-sans);
-    @apply text-lg text-muted-foreground;
+    @apply text-base text-muted-foreground sm:text-lg;
   }
 
   .quiz-option {
-    @apply border border-border rounded-lg px-6 py-4 text-left transition-all duration-200 cursor-pointer hover:border-primary hover:bg-secondary;
+    @apply min-h-12 rounded-2xl border border-border px-4 py-4 text-left transition-all duration-200 cursor-pointer hover:border-primary hover:bg-secondary sm:px-6;
   }
 
   .quiz-option-correct {

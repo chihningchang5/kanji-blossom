@@ -40,15 +40,15 @@ export default function ClozeQuestion({ question, options, onAnswer }: Props) {
     <>
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-          <span className={`text-9xl font-bold animate-scale-in ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
+          <span className={`text-7xl font-bold animate-scale-in sm:text-9xl ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
             {isCorrect ? '○' : '×'}
           </span>
         </div>
       )}
 
-      <div className="text-center mb-12">
+      <div className="mb-10 text-center sm:mb-12">
         <p className="text-sm text-muted-foreground mb-4">請選出正確填入空格的詞彙</p>
-        <p className="text-2xl font-serif leading-relaxed mb-3">{cloze}</p>
+        <p className="mb-3 text-xl font-serif leading-relaxed sm:text-2xl">{cloze}</p>
         {selected && (
           <>
             <p className="reading-text text-base">{example.reading}</p>
@@ -58,9 +58,9 @@ export default function ClozeQuestion({ question, options, onAnswer }: Props) {
       </div>
 
       {selected && (
-        <div className="text-center mb-6 animate-fade-in">
+        <div className="mb-6 text-center animate-fade-in">
           <p className="text-sm text-muted-foreground">原句：</p>
-          <p className="font-serif text-lg">{example.sentence}</p>
+          <p className="font-serif text-base sm:text-lg">{example.sentence}</p>
         </div>
       )}
 
@@ -73,8 +73,8 @@ export default function ClozeQuestion({ question, options, onAnswer }: Props) {
           }
           return (
             <button key={opt.id} className={cls} onClick={() => handleSelect(opt.id)}>
-              <span className="font-medium font-serif text-lg">{opt.word}</span>
-              <span className="text-sm text-muted-foreground ml-2">{opt.reading}</span>
+              <span className="font-serif text-lg font-medium sm:text-xl">{opt.word}</span>
+              <span className="ml-2 block text-sm text-muted-foreground sm:inline">{opt.reading}</span>
             </button>
           );
         })}

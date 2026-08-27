@@ -141,17 +141,17 @@ export default function Learned() {
     setFinished(false);
   };
 
-  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">連線中...</div>;
-  if (e1 || e2) return <div className="min-h-screen flex flex-col items-center justify-center gap-2 text-muted-foreground"><p>連線失敗，請稍後再試</p><p className="text-xs">{er1 instanceof Error ? er1.message : ''}</p></div>;
+  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center px-4 text-center text-muted-foreground">連線中...</div>;
+  if (e1 || e2) return <div className="min-h-screen flex flex-col items-center justify-center gap-2 px-4 text-center text-muted-foreground"><p>連線失敗，請稍後再試</p><p className="text-xs">{er1 instanceof Error ? er1.message : ''}</p></div>;
 
   // Count picker dialog
   if (showCountPicker) {
     const total = learnedWords?.length || 0;
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 animate-fade-in">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4 text-center animate-fade-in">
         <h2 className="text-2xl font-bold font-serif">複習測驗</h2>
-        <p className="text-muted-foreground text-sm">選擇本次複習題數（優先出最久未複習的單字）</p>
-        <div className="flex flex-col gap-3 w-48">
+        <p className="text-sm text-muted-foreground">選擇本次複習題數（優先出最久未複習的單字）</p>
+        <div className="flex w-full max-w-xs flex-col gap-3">
           {[10, 20].filter(n => n <= total).map(n => (
             <Button key={n} variant="outline" className="text-lg" onClick={() => startQuiz(n)}>
               {n} 題
@@ -170,7 +170,7 @@ export default function Learned() {
   if (showQuiz) {
     if (!quiz.length) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
           <p className="text-muted-foreground">需要至少 4 個單字才能開始複習測驗。</p>
           <Button onClick={stopQuiz}>返回已習得列表</Button>
         </div>
@@ -180,12 +180,12 @@ export default function Learned() {
     if (finished) {
       const correctCount = results.filter(Boolean).length;
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-6">
-          <h2 className="text-4xl font-bold">複習完成！</h2>
-          <div className="text-6xl font-serif font-bold text-primary">
+        <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4 text-center">
+          <h2 className="text-3xl font-bold sm:text-4xl">複習完成！</h2>
+          <div className="text-5xl font-serif font-bold text-primary sm:text-6xl">
             {correctCount}/{results.length}
           </div>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-lg text-muted-foreground">
             正確率：{Math.round((correctCount / results.length) * 100)}%
           </p>
           {wrongAnswers.length > 0 && (
@@ -193,7 +193,7 @@ export default function Learned() {
               答錯 {wrongAnswers.length} 題：{wrongAnswers.map((w) => w.word).join('、')}
             </p>
           )}
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Button variant="outline" onClick={resetQuiz}>
               <RotateCcw className="w-4 h-4 mr-1" />再試一次
             </Button>
@@ -226,7 +226,7 @@ export default function Learned() {
     return (
       <div className="min-h-screen">
         <header className="border-b border-border">
-          <div className="container max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="container mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
             <Button variant="ghost" size="sm" onClick={stopQuiz}>
               <ArrowLeft className="w-4 h-4 mr-1" />返回
             </Button>
@@ -234,21 +234,21 @@ export default function Learned() {
           </div>
         </header>
 
-        <main className="container max-w-xl mx-auto px-4 py-16">
+        <main className="container mx-auto max-w-xl px-4 py-10 sm:px-6 sm:py-16">
           {selected && (
             <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-              <span className={`text-9xl font-bold animate-scale-in ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
+              <span className={`text-7xl font-bold animate-scale-in sm:text-9xl ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
                 {isCorrect ? '○' : '×'}
               </span>
             </div>
           )}
 
-          <div className="text-center mb-12">
+          <div className="mb-10 text-center sm:mb-12">
             <p className="text-sm text-muted-foreground mb-4">
               {q.mode === 'A' ? '以下平假名的中文意思是？' : '以下中文對應的平假名是？'}
             </p>
             <p
-              className="japanese-word text-5xl cursor-pointer"
+              className="japanese-word cursor-pointer break-all text-4xl sm:text-5xl"
               onClick={() => speakJapanese(q.word.word)}
             >
               {q.mode === 'A' ? q.word.reading : q.word.translation}
@@ -278,16 +278,16 @@ export default function Learned() {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <div className="container max-w-4xl mx-auto px-4 py-4 flex justify-end">
+      <div className="container mx-auto flex max-w-5xl justify-end px-4 py-4 sm:px-6">
           {learnedWords && learnedWords.length >= 4 && (
-            <Button size="sm" onClick={() => setShowCountPicker(true)}>
+            <Button size="sm" className="w-full sm:w-auto" onClick={() => setShowCountPicker(true)}>
               <Swords className="w-4 h-4 mr-1" />複習測驗
             </Button>
           )}
       </div>
 
-      <main className="container max-w-4xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
+      <main className="container mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-10 text-center sm:mb-12">
           <div className="inline-flex items-center gap-2 text-primary mb-4">
             <BookCheck className="w-5 h-5" />
             <span className="text-sm font-medium tracking-widest uppercase">已習得單字</span>
@@ -299,7 +299,7 @@ export default function Learned() {
         </div>
 
         {!learnedWords?.length ? (
-          <div className="text-center py-20 space-y-4">
+          <div className="space-y-4 py-20 text-center">
             <p className="text-muted-foreground">尚未有已習得的單字。</p>
             <p className="text-sm text-muted-foreground">在測驗中答對後，可將單字標記為已習得。</p>
             <Button asChild>
@@ -311,7 +311,7 @@ export default function Learned() {
             {learnedWords.map((w, i) => (
               <div
                 key={w.id}
-                className="group bg-card border border-border rounded-lg p-6 text-center space-y-2 animate-fade-in cursor-pointer hover:border-primary transition-colors relative"
+                className="group relative cursor-pointer space-y-2 rounded-2xl border border-border bg-card p-5 text-center shadow-sm transition-colors animate-fade-in hover:border-primary sm:p-6"
                 style={{ animationDelay: `${i * 50}ms` }}
                 onClick={() => setSelectedWord(w)}
               >

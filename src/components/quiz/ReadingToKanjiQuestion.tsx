@@ -29,15 +29,15 @@ export default function ReadingToKanjiQuestion({ question, options, onAnswer }: 
     <>
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-          <span className={`text-9xl font-bold animate-scale-in ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
+          <span className={`text-7xl font-bold animate-scale-in sm:text-9xl ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
             {isCorrect ? '○' : '×'}
           </span>
         </div>
       )}
 
-      <div className="text-center mb-12">
+      <div className="mb-10 text-center sm:mb-12">
         <p className="text-sm text-muted-foreground mb-4">以下讀音對應的漢字是？</p>
-        <p className="japanese-word text-5xl cursor-pointer" onClick={() => speakJapanese(question.reading)}>
+        <p className="japanese-word cursor-pointer break-all text-4xl sm:text-5xl" onClick={() => speakJapanese(question.reading)}>
           {question.reading}
         </p>
       </div>
@@ -51,7 +51,7 @@ export default function ReadingToKanjiQuestion({ question, options, onAnswer }: 
           }
           return (
             <button key={opt.id} className={cls} onClick={() => handleSelect(opt.id)}>
-              <span className="font-medium font-serif text-lg">{opt.word}</span>
+              <span className="font-serif text-lg font-medium sm:text-xl">{opt.word}</span>
             </button>
           );
         })}

@@ -47,13 +47,13 @@ function EditForm({ initial, onSubmit, submitLabel }: {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 items-end">
-      <Input placeholder="漢字" value={word} onChange={(e) => setWord(e.target.value)} className="w-28" />
-      <Input placeholder="平假名" value={reading} onChange={(e) => setReading(e.target.value)} className="w-32" />
-      <Input placeholder="中文翻譯" value={translation} onChange={(e) => setTranslation(e.target.value)} className="w-32" />
-      <select value={level} onChange={(e) => setLevel(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+      <Input placeholder="漢字" value={word} onChange={(e) => setWord(e.target.value)} className="w-full sm:w-28" />
+      <Input placeholder="平假名" value={reading} onChange={(e) => setReading(e.target.value)} className="w-full sm:w-32" />
+      <Input placeholder="中文翻譯" value={translation} onChange={(e) => setTranslation(e.target.value)} className="w-full sm:w-32" />
+      <select value={level} onChange={(e) => setLevel(e.target.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-auto">
         {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
       </select>
-      <Button type="submit" size="sm">{submitLabel}</Button>
+      <Button type="submit" size="sm" className="w-full sm:w-auto">{submitLabel}</Button>
     </form>
   );
 }
@@ -183,7 +183,7 @@ export default function Admin() {
     <div className="min-h-screen">
       <AppHeader />
 
-      <main className="container max-w-4xl mx-auto px-4 py-8 space-y-10">
+      <main className="container mx-auto max-w-5xl space-y-10 px-4 py-8 sm:px-6">
         <section>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />手動新增公共庫單字
@@ -198,7 +198,7 @@ export default function Admin() {
           </h2>
           <p className="text-sm text-muted-foreground mb-3">
             貼上 JSON 格式的單字列表（重複漢字+讀音將自動合併）：
-            <code className="block mt-1 p-2 bg-secondary rounded text-xs whitespace-pre-wrap">
+            <code className="mt-1 block overflow-x-auto rounded bg-secondary p-2 text-xs whitespace-pre-wrap">
               {'[{"word":"猫","reading":"ねこ","translation":"貓","level":"N5","examples":[{"sentence":"猫が好きです","reading":"ねこがすきです","translation":"我喜歡貓"}]}]'}
             </code>
           </p>
@@ -220,7 +220,7 @@ export default function Admin() {
           ) : !publicWords.length ? (
             <p className="text-muted-foreground">尚無公共庫單字。</p>
           ) : (
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="hidden overflow-hidden rounded-lg border border-border md:block">
               <table className="w-full text-sm">
                 <thead className="bg-secondary">
                   <tr>
@@ -286,23 +286,80 @@ export default function Admin() {
               </table>
             </div>
           )}
+
+          {!isLoading && !!publicWords.length && (
+            <div className="grid gap-3 md:hidden">
+              {publicWords.map((w) => (
+                <div key={w.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                  {editingId === w.id ? (
+                    <div className="space-y-3">
+                      <EditForm initial={w} onSubmit={handleUpdate(w.id)} submitLabel="更新" />
+                      <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>取消</Button>
+                    </div>
+                  ) : editingExamplesId === w.id ? (
+                    <ExampleEditor
+                      examples={w.examples || []}
+                      onSave={(examples) => handleSaveExamples(w.id, examples)}
+                      onCancel={() => setEditingExamplesId(null)}
+                    />
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-serif text-xl font-semibold">{w.word}</p>
+                          <p className="text-sm text-muted-foreground">{w.reading}</p>
+                        </div>
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">{w.level}</span>
+                      </div>
+                      <p className="text-sm">{w.translation}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setEditingId(w.id)}>編輯</Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditingExamplesId(w.id)}>
+                          <Pencil className="mr-1 h-4 w-4" />例句
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                              <Trash2 className="mr-1 h-4 w-4" />刪除
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                確定要刪除「{w.word}」嗎？此操作無法復原。
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>取消</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(w.id)}>刪除</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
         {/* Reward Management */}
         <section>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Gift className="w-5 h-5 text-primary" />獎勵圖片管理
           </h2>
-          <div className="flex flex-wrap gap-2 items-end mb-4">
-            <Input placeholder="圖片 URL" value={rewardUrl} onChange={(e) => setRewardUrl(e.target.value)} className="w-64" />
-            <Input placeholder="說明文字" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} className="w-40" />
-            <Input placeholder="解鎖天數" type="number" value={rewardDays} onChange={(e) => setRewardDays(e.target.value)} className="w-24" />
+          <div className="mb-4 flex flex-wrap items-end gap-2">
+            <Input placeholder="圖片 URL" value={rewardUrl} onChange={(e) => setRewardUrl(e.target.value)} className="w-full sm:w-64" />
+            <Input placeholder="說明文字" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} className="w-full sm:w-40" />
+            <Input placeholder="解鎖天數" type="number" value={rewardDays} onChange={(e) => setRewardDays(e.target.value)} className="w-full sm:w-24" />
             <Button size="sm" onClick={() => {
               if (!rewardUrl.trim()) { toast.error('請填入圖片 URL'); return; }
               addReward.mutate({ image_url: rewardUrl.trim(), description: rewardDesc.trim() || '神秘獎勵', unlock_days: Number(rewardDays) || 25 }, {
                 onSuccess: () => { toast.success('獎勵已新增！'); setRewardUrl(''); setRewardDesc(''); setRewardDays('25'); },
                 onError: (e) => toast.error('新增失敗：' + e.message),
               });
-            }} disabled={addReward.isPending}>新增獎勵</Button>
+            }} disabled={addReward.isPending} className="w-full sm:w-auto">新增獎勵</Button>
           </div>
 
           {rewardsLoading ? (

@@ -22,11 +22,11 @@ export default function WordDetailModal({ word, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center space-y-2">
             <div
-              className="japanese-word text-5xl cursor-pointer inline-block"
+              className="japanese-word inline-block cursor-pointer text-4xl sm:text-5xl"
               onClick={() => speakJapanese(word.word)}
             >
               {word.word}

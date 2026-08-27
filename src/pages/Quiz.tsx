@@ -133,12 +133,12 @@ export default function Quiz() {
     setIsLoadingNext(false);
   };
 
-  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">載入中...</div>;
+  if (l1 || l2) return <div className="min-h-screen flex items-center justify-center px-4 text-center text-muted-foreground">載入中...</div>;
 
   if (!quiz.length) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">需要至少 4 個單字才能開始測驗。</p>
+        <p className="px-4 text-center text-muted-foreground">需要至少 4 個單字才能開始測驗。</p>
         <Button asChild><Link to="/admin">前往新增單字</Link></Button>
       </div>
     );
@@ -165,18 +165,18 @@ export default function Quiz() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-border">
-        <div className="container max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/"><ArrowLeft className="w-4 h-4 mr-1" />返回</Link>
           </Button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {useMode === 'cloze' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary sm:text-xs">
                 填空模式
               </span>
             )}
             {useMode === 'reading' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary sm:text-xs">
                 讀音→漢字
               </span>
             )}
@@ -185,10 +185,10 @@ export default function Quiz() {
         </div>
       </header>
 
-      <main className="container max-w-xl mx-auto px-4 py-16">
+      <main className="container mx-auto max-w-xl px-4 py-10 sm:px-6 sm:py-16">
         {current === 0 && (
-          <div className="text-center mb-8 animate-fade-in">
-            <p className="text-sm text-muted-foreground tracking-wider">
+          <div className="mb-8 text-center animate-fade-in">
+            <p className="text-sm tracking-wider text-muted-foreground">
               {useMode === 'cloze' ? 'Step 3: 應用 — 例句填空' : useMode === 'reading' ? 'Step 2: 聽音辨形 — 平假名 → 漢字' : 'Step 1: 基礎 — 漢字 → 中文翻譯'}
             </p>
           </div>
